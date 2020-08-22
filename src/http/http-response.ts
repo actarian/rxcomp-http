@@ -14,7 +14,7 @@ export interface IHttpHeaderResponse<T> {
 }
 
 export interface IHttpResponse<T> extends IHttpHeaderResponse<T> {
-	body?: HttpBodyType;
+	body?: HttpBodyType<T>;
 }
 
 export class HttpHeaderResponse<T> implements IHttpHeaderResponse<T> {
@@ -54,7 +54,7 @@ export class HttpResponse<T> implements IHttpResponse<T> {
 	readonly url: string | undefined;
 	readonly ok: boolean;
 	readonly type: HttpEventType.Response = HttpEventType.Response;
-	readonly body: HttpBodyType = null;
+	readonly body: HttpBodyType<T> = null;
 	constructor(options?: IHttpResponse<T>) {
 		if (options) {
 			this.headers = new HttpHeaders(options.headers);

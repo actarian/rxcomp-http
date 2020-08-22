@@ -1,11 +1,11 @@
 
 import { EMPTY, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '../../../../src/rxcomp-http';
+import { HttpEvent, HttpHandler, HttpRequest, HttpResponse, IHttpInterceptor } from '../../../../src/rxcomp-http';
 
 const cancelRequest: boolean = false;
 
-export class CustomInterceptor implements HttpInterceptor {
+export class CustomInterceptor implements IHttpInterceptor {
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         if (cancelRequest) {
             return EMPTY;
