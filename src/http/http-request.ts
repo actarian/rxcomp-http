@@ -14,6 +14,7 @@ export interface IHttpRequestInit<T> {
 	params?: HttpParams | { [key: string]: any } | string | undefined;
 	responseType?: HttpResponseType;
 	withCredentials?: boolean;
+	hydrate?: boolean;
 	observe?: HttpObserveType;
 	body?: HttpBodyType<T>;
 }
@@ -28,11 +29,17 @@ export class HttpRequest<T> {
 	readonly headers!: HttpHeaders;
 	readonly reportProgress: boolean = false;
 	readonly withCredentials: boolean = false;
+	readonly hydrate: boolean = true;
 	readonly observe: HttpObserveType = 'body';
 	readonly responseType: HttpResponseType = 'json';
 	readonly method: HttpMethodType;
 	readonly params!: HttpParams;
 	readonly urlWithParams: string;
+	get transferKey(): string {
+		let key: string = flatMap_(this.url, this);
+		key = key.replace(/(\W)/gm, '_');
+		return key;
+	}
 	constructor(method: HttpMethodNoBodyType, url: string, options?: IHttpRequestInit<T>);
 	constructor(method: HttpMethodBodyType, url: string, body: HttpBodyType<T>, options?: IHttpRequestInit<T>);
 	constructor(method: HttpMethodType, url: string, body: HttpBodyType<T>, options?: IHttpRequestInit<T>);
@@ -214,3 +221,14 @@ function isBlob_(value: any): value is Blob {
 function isFormData_(value: any): value is FormData {
 	return typeof FormData !== 'undefined' && value instanceof FormData;
 }
+
+function flatMap_(s: string, x: any): string {
+	if (typeof x === 'number') {
+		s += x.toString();
+	} else if (typeof x === 'string') {
+		s += x.substr(0, 10);
+	} else if (x && typeof x === 'object') {
+		s += '_' + Object.keys(x).map(k => k + '_' + flatMap_('', x[k])).join('_');
+	}
+	return s;
+};

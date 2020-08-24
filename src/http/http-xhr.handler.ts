@@ -1,4 +1,4 @@
-import { nextError$ } from 'rxcomp';
+import { isPlatformBrowser, isPlatformServer, nextError$, TransferService } from 'rxcomp';
 import { Observable, Observer } from 'rxjs';
 import { HttpErrorResponse, IHttpErrorResponse, IHttpJsonParseError } from './http-error-response';
 import { HttpDownloadProgressEvent, HttpEventType, HttpUploadProgressEvent } from './http-event';
@@ -32,69 +32,104 @@ export class HttpXhrHandler implements HttpHandler {
 			if (!requestInit.method) {
 				throw new Error(`missing method`);
 			}
-			xhr.open(requestInit.method!, requestInfo);
-			if (request.withCredentials) {
-				xhr.withCredentials = true;
-			}
-			const headers = request.headers;
-			if (!headers.has('Accept')) {
-				headers.set('Accept', 'application/json, text/plain, */*');
-			}
-			if (!headers.has('Content-Type')) {
-				const detectedType = request.detectContentTypeHeader();
-				if (detectedType !== null) {
-					headers.set('Content-Type', detectedType);
+			// hydrate
+			const stateKey = TransferService.makeKey(request.transferKey);
+			if (isPlatformBrowser && request.hydrate && TransferService.has(stateKey)) {
+				const cached = TransferService.get(stateKey) as HttpResponse<T>; // !!! <T>
+				TransferService.remove(stateKey);
+				observer.next(cached);
+				observer.complete();
+				return;
+				// hydrate
+			} else {
+				xhr.open(requestInit.method!, requestInfo);
+				if (request.withCredentials) {
+					xhr.withCredentials = true;
 				}
-			}
-			console.log('HttpXhrHandler.contentType', headers.get('Content-Type'));
-			headers.forEach((value, name) => xhr.setRequestHeader(name, value));
-			if (request.responseType) {
-				xhr.responseType = (request.responseType !== 'json' ? request.responseType : 'text') as any;
-			}
-			const body = request.serializeBody();
-			let headerResponse: HttpHeaderResponse<T> | null = null;
-			const partialFromXhr_ = (): HttpHeaderResponse<T> => {
-				if (headerResponse !== null) {
-					return headerResponse;
+				const headers = request.headers;
+				if (!headers.has('Accept')) {
+					headers.set('Accept', 'application/json, text/plain, */*');
 				}
-				const status: number = xhr.status === 1223 ? 204 : xhr.status;
-				const statusText = xhr.statusText || 'OK';
-				const headers = new HttpHeaders(xhr.getAllResponseHeaders());
-				const url = getResponseUrl_(xhr) || request.url;
-				headerResponse = new HttpHeaderResponse({ headers, status, statusText, url });
-				return headerResponse;
-			};
-			const onLoad = () => {
-				let { headers, status, statusText, url } = partialFromXhr_();
-				let body: any | null = null;
-				if (status !== 204) {
-					body = (typeof xhr.response === 'undefined') ? xhr.responseText : xhr.response;
-				}
-				if (status === 0) {
-					status = !!body ? 200 : 0;
-				}
-				let ok = status >= 200 && status < 300;
-				if (request.responseType === 'json' && typeof body === 'string') {
-					const originalBody = body;
-					body = body.replace(XSSI_PREFIX, '');
-					try {
-						body = body !== '' ? JSON.parse(body) : null;
-					} catch (error) {
-						body = originalBody;
-						if (ok) {
-							ok = false;
-							body = { error, text: body } as IHttpJsonParseError;
-						}
+				if (!headers.has('Content-Type')) {
+					const detectedType = request.detectContentTypeHeader();
+					if (detectedType !== null) {
+						headers.set('Content-Type', detectedType);
 					}
 				}
-				if (ok) {
-					observer.next(new HttpResponse({ body, headers, status, statusText, url: url }));
-					observer.complete();
-				} else {
+				console.log('HttpXhrHandler.contentType', headers.get('Content-Type'));
+				headers.forEach((value, name) => xhr.setRequestHeader(name, value));
+				if (request.responseType) {
+					xhr.responseType = (request.responseType !== 'json' ? request.responseType : 'text') as any;
+				}
+				const body = request.serializeBody();
+				let headerResponse: HttpHeaderResponse<T> | null = null;
+				const partialFromXhr_ = (): HttpHeaderResponse<T> => {
+					if (headerResponse !== null) {
+						return headerResponse;
+					}
+					const status: number = xhr.status === 1223 ? 204 : xhr.status;
+					const statusText = xhr.statusText || 'OK';
+					const headers = new HttpHeaders(xhr.getAllResponseHeaders());
+					const url = getResponseUrl_(xhr) || request.url;
+					headerResponse = new HttpHeaderResponse({ headers, status, statusText, url });
+					return headerResponse;
+				};
+				const onLoad = () => {
+					let { headers, status, statusText, url } = partialFromXhr_();
+					let body: any | null = null;
+					if (status !== 204) {
+						body = (typeof xhr.response === 'undefined') ? xhr.responseText : xhr.response;
+					}
+					if (status === 0) {
+						status = !!body ? 200 : 0;
+					}
+					let ok = status >= 200 && status < 300;
+					if (request.responseType === 'json' && typeof body === 'string') {
+						const originalBody = body;
+						body = body.replace(XSSI_PREFIX, '');
+						try {
+							body = body !== '' ? JSON.parse(body) : null;
+						} catch (error) {
+							body = originalBody;
+							if (ok) {
+								ok = false;
+								body = { error, text: body } as IHttpJsonParseError;
+							}
+						}
+					}
+					if (ok) {
+						const response = new HttpResponse({ body, headers, status, statusText, url: url });
+						// hydrate
+						if (isPlatformServer && request.hydrate) {
+							TransferService.set(stateKey, response);
+						}
+						// hydrate
+						observer.next(response);
+						observer.complete();
+					} else {
+						const options: IHttpErrorResponse<T> = {
+							error: new Error(statusText),
+							headers,
+							status,
+							statusText,
+							url,
+							request
+						};
+						const httpErrorResponse = new HttpErrorResponse<T>(options);
+						// console.log('httpErrorResponse', httpErrorResponse);
+						nextError$.next(httpErrorResponse);
+						// return of(null);
+						observer.error(httpErrorResponse);
+					}
+				};
+				const onError = (error: ProgressEvent) => {
+					const { url } = partialFromXhr_();
+					const statusText = xhr.statusText || 'Unknown Error';
+					const headers = new HttpHeaders(xhr.getAllResponseHeaders());
 					const options: IHttpErrorResponse<T> = {
 						error: new Error(statusText),
 						headers,
-						status,
+						status: xhr.status || 0,
 						statusText,
 						url,
 						request
@@ -104,78 +139,60 @@ export class HttpXhrHandler implements HttpHandler {
 					nextError$.next(httpErrorResponse);
 					// return of(null);
 					observer.error(httpErrorResponse);
-				}
-			};
-			const onError = (error: ProgressEvent) => {
-				const { url } = partialFromXhr_();
-				const statusText = xhr.statusText || 'Unknown Error';
-				const headers = new HttpHeaders(xhr.getAllResponseHeaders());
-				const options: IHttpErrorResponse<T> = {
-					error: new Error(statusText),
-					headers,
-					status: xhr.status || 0,
-					statusText,
-					url,
-					request
 				};
-				const httpErrorResponse = new HttpErrorResponse<T>(options);
-				// console.log('httpErrorResponse', httpErrorResponse);
-				nextError$.next(httpErrorResponse);
-				// return of(null);
-				observer.error(httpErrorResponse);
-			};
-			let sentHeaders = false;
-			const onDownProgress = (event: ProgressEvent) => {
-				if (!sentHeaders) {
-					observer.next(partialFromXhr_());
-					sentHeaders = true;
-				}
-				const progressEvent: HttpDownloadProgressEvent = {
-					type: HttpEventType.DownloadProgress,
-					loaded: event.loaded,
+				let sentHeaders = false;
+				const onDownProgress = (event: ProgressEvent) => {
+					if (!sentHeaders) {
+						observer.next(partialFromXhr_());
+						sentHeaders = true;
+					}
+					const progressEvent: HttpDownloadProgressEvent = {
+						type: HttpEventType.DownloadProgress,
+						loaded: event.loaded,
+					};
+					if (event.lengthComputable) {
+						progressEvent.total = event.total;
+					}
+					if (request.responseType === 'text' && !!xhr.responseText) {
+						progressEvent.partialText = xhr.responseText;
+					}
+					console.log(progressEvent);
+					observer.next(progressEvent);
 				};
-				if (event.lengthComputable) {
-					progressEvent.total = event.total;
-				}
-				if (request.responseType === 'text' && !!xhr.responseText) {
-					progressEvent.partialText = xhr.responseText;
-				}
-				console.log(progressEvent);
-				observer.next(progressEvent);
-			};
-			const onUpProgress = (event: ProgressEvent) => {
-				const progress: HttpUploadProgressEvent = {
-					type: HttpEventType.UploadProgress,
-					loaded: event.loaded,
+				const onUpProgress = (event: ProgressEvent) => {
+					const progress: HttpUploadProgressEvent = {
+						type: HttpEventType.UploadProgress,
+						loaded: event.loaded,
+					};
+					if (event.lengthComputable) {
+						progress.total = event.total;
+					}
+					observer.next(progress);
 				};
-				if (event.lengthComputable) {
-					progress.total = event.total;
-				}
-				observer.next(progress);
-			};
-			xhr.addEventListener('load', onLoad);
-			xhr.addEventListener('error', onError);
-			if (request.reportProgress) {
-				xhr.addEventListener('progress', onDownProgress);
-				if (body !== null && xhr.upload) {
-					xhr.upload.addEventListener('progress', onUpProgress);
-				}
-			}
-			xhr.send(body!);
-			observer.next({ type: HttpEventType.Sent });
-			return () => {
-				xhr.removeEventListener('error', onError);
-				xhr.removeEventListener('load', onLoad);
+				xhr.addEventListener('load', onLoad);
+				xhr.addEventListener('error', onError);
 				if (request.reportProgress) {
-					xhr.removeEventListener('progress', onDownProgress);
+					xhr.addEventListener('progress', onDownProgress);
 					if (body !== null && xhr.upload) {
-						xhr.upload.removeEventListener('progress', onUpProgress);
+						xhr.upload.addEventListener('progress', onUpProgress);
 					}
 				}
-				if (xhr.readyState !== xhr.DONE) {
-					xhr.abort();
-				}
-			};
+				xhr.send(body!);
+				observer.next({ type: HttpEventType.Sent });
+				return () => {
+					xhr.removeEventListener('error', onError);
+					xhr.removeEventListener('load', onLoad);
+					if (request.reportProgress) {
+						xhr.removeEventListener('progress', onDownProgress);
+						if (body !== null && xhr.upload) {
+							xhr.upload.removeEventListener('progress', onUpProgress);
+						}
+					}
+					if (xhr.readyState !== xhr.DONE) {
+						xhr.abort();
+					}
+				};
+			}
 		});
 	}
 }

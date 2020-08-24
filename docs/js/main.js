@@ -1,10 +1,26 @@
 /**
- * @license rxcomp-http v1.0.0-beta.12
+ * @license rxcomp-http v1.0.0-beta.13
  * (c) 2020 Luca Zampetti <lzampetti@gmail.com>
  * License: MIT
  */
 
-(function(rxcomp,rxjs,operators){'use strict';function _inheritsLoose(subClass, superClass) {
+(function(rxcomp,rxjs,operators){'use strict';function _defineProperties(target, props) {
+  for (var i = 0; i < props.length; i++) {
+    var descriptor = props[i];
+    descriptor.enumerable = descriptor.enumerable || false;
+    descriptor.configurable = true;
+    if ("value" in descriptor) descriptor.writable = true;
+    Object.defineProperty(target, descriptor.key, descriptor);
+  }
+}
+
+function _createClass(Constructor, protoProps, staticProps) {
+  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+  if (staticProps) _defineProperties(Constructor, staticProps);
+  return Constructor;
+}
+
+function _inheritsLoose(subClass, superClass) {
   subClass.prototype = Object.create(superClass.prototype);
   subClass.prototype.constructor = subClass;
   subClass.__proto__ = superClass;
@@ -92,22 +108,7 @@ function _wrapNativeSuper(Class) {
   };
 
   return _wrapNativeSuper(Class);
-}var factories = [];
-var pipes = [];
-
-var HttpModule = function (_Module) {
-  _inheritsLoose(HttpModule, _Module);
-
-  function HttpModule() {
-    return _Module.apply(this, arguments) || this;
-  }
-
-  return HttpModule;
-}(rxcomp.Module);
-HttpModule.meta = {
-  declarations: [].concat(factories, pipes),
-  exports: [].concat(factories, pipes)
-};var HttpEventType;
+}var HttpEventType;
 
 (function (HttpEventType) {
   HttpEventType[HttpEventType["Sent"] = 0] = "Sent";
@@ -326,29 +327,41 @@ HttpModule.meta = {
 
     var requestInfo = request.urlWithParams;
     var requestInit = request.toInitRequest();
-    return rxjs.from(fetch(requestInfo, requestInit).then(function (response) {
-      return _this.getProgress(response, request);
-    }).then(function (response) {
-      return _this.getResponse(response, request);
-    })).pipe(operators.catchError(function (error) {
-      var errorResponse = {
-        error: error
-      };
+    var stateKey = rxcomp.TransferService.makeKey(request.transferKey);
 
-      if (_this.response_) {
-        errorResponse.headers = _this.response_.headers;
-        errorResponse.status = _this.response_.status;
-        errorResponse.statusText = _this.response_.statusText;
-        errorResponse.url = _this.response_.url;
-        errorResponse.request = request;
-      }
+    if (rxcomp.isPlatformBrowser && request.hydrate && rxcomp.TransferService.has(stateKey)) {
+      var cached = rxcomp.TransferService.get(stateKey);
+      rxcomp.TransferService.remove(stateKey);
+      return rxjs.of(cached);
+    } else {
+      return rxjs.from(fetch(requestInfo, requestInit).then(function (response) {
+        return _this.getProgress(response, request);
+      }).then(function (response) {
+        return _this.getResponse(response, request);
+      })).pipe(operators.tap(function (response) {
+        if (rxcomp.isPlatformServer && request.hydrate) {
+          rxcomp.TransferService.set(stateKey, response);
+        }
+      }), operators.catchError(function (error) {
+        var errorResponse = {
+          error: error
+        };
 
-      var httpErrorResponse = new HttpErrorResponse(errorResponse);
-      rxcomp.nextError$.next(httpErrorResponse);
-      return rxjs.of(_this.response_);
-    }), operators.finalize(function () {
-      _this.response_ = null;
-    }));
+        if (_this.response_) {
+          errorResponse.headers = _this.response_.headers;
+          errorResponse.status = _this.response_.status;
+          errorResponse.statusText = _this.response_.statusText;
+          errorResponse.url = _this.response_.url;
+          errorResponse.request = request;
+        }
+
+        var httpErrorResponse = new HttpErrorResponse(errorResponse);
+        rxcomp.nextError$.next(httpErrorResponse);
+        return rxjs.of(_this.response_);
+      }), operators.finalize(function () {
+        _this.response_ = null;
+      }));
+    }
   };
 
   _proto.getProgress = function getProgress(response, request) {
@@ -521,7 +534,33 @@ var HttpInterceptingHandler = function () {
   };
 
   return HttpInterceptingHandler;
-}();var HttpUrlEncodingCodec = function () {
+}();var factories = [];
+var pipes = [];
+
+var HttpModule = function (_Module) {
+  _inheritsLoose(HttpModule, _Module);
+
+  function HttpModule() {
+    return _Module.apply(this, arguments) || this;
+  }
+
+  HttpModule.useInterceptors = function useInterceptors(interceptorFactories) {
+    if (interceptorFactories == null ? void 0 : interceptorFactories.length) {
+      var interceptors = interceptorFactories == null ? void 0 : interceptorFactories.map(function (x) {
+        return new x();
+      });
+      HttpInterceptors.push.apply(HttpInterceptors, interceptors);
+    }
+
+    return this;
+  };
+
+  return HttpModule;
+}(rxcomp.Module);
+HttpModule.meta = {
+  declarations: [].concat(factories, pipes),
+  exports: [].concat(factories, pipes)
+};var HttpUrlEncodingCodec = function () {
   function HttpUrlEncodingCodec() {}
 
   var _proto = HttpUrlEncodingCodec.prototype;
@@ -664,6 +703,7 @@ function encodeParam_(v) {
     this.url = url;
     this.reportProgress = false;
     this.withCredentials = false;
+    this.hydrate = true;
     this.observe = 'body';
     this.responseType = 'json';
     var isStaticFile = /\.(json|xml|txt)(\?.*)?$/.test(url);
@@ -795,6 +835,15 @@ function encodeParam_(v) {
     return clone;
   };
 
+  _createClass(HttpRequest, [{
+    key: "transferKey",
+    get: function get() {
+      var key = flatMap_(this.url, this);
+      key = key.replace(/(\W)/gm, '_');
+      return key;
+    }
+  }]);
+
   return HttpRequest;
 }();
 
@@ -822,6 +871,20 @@ function isBlob_(value) {
 
 function isFormData_(value) {
   return typeof FormData !== 'undefined' && value instanceof FormData;
+}
+
+function flatMap_(s, x) {
+  if (typeof x === 'number') {
+    s += x.toString();
+  } else if (typeof x === 'string') {
+    s += x.substr(0, 10);
+  } else if (x && typeof x === 'object') {
+    s += '_' + Object.keys(x).map(function (k) {
+      return k + '_' + flatMap_('', x[k]);
+    }).join('_');
+  }
+
+  return s;
 }var HttpService = function () {
   function HttpService() {}
 
@@ -1086,9 +1149,7 @@ AppComponent.meta = {
   };
 
   return CustomInterceptor;
-}();HttpInterceptors.push(new CustomInterceptor());
-
-var AppModule = function (_Module) {
+}();var AppModule = function (_Module) {
   _inheritsLoose(AppModule, _Module);
 
   function AppModule() {
@@ -1098,7 +1159,7 @@ var AppModule = function (_Module) {
   return AppModule;
 }(rxcomp.Module);
 AppModule.meta = {
-  imports: [rxcomp.CoreModule, HttpModule],
+  imports: [rxcomp.CoreModule, HttpModule.useInterceptors([CustomInterceptor])],
   declarations: [],
   bootstrap: AppComponent
 };rxcomp.Browser.bootstrap(AppModule);}(rxcomp,rxjs,rxjs.operators));

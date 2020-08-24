@@ -1,6 +1,6 @@
-import { isPlatformBrowser, nextError$ } from 'rxcomp';
+import { isPlatformBrowser, isPlatformServer, nextError$, TransferService } from 'rxcomp';
 import { from, Observable, of } from 'rxjs';
-import { catchError, finalize } from 'rxjs/operators';
+import { catchError, finalize, tap } from 'rxjs/operators';
 import { HttpErrorResponse, IHttpErrorResponse } from './http-error-response';
 import { HttpHandler } from './http-handler';
 import { HttpRequest } from './http-request';
@@ -16,36 +16,51 @@ export class HttpFetchHandler implements HttpHandler {
 		}
 		const requestInfo: RequestInfo = request.urlWithParams;
 		const requestInit: RequestInit = request.toInitRequest();
-		// const fetchRequest: Request = request.toFetchRequest__();
 		// console.log('fetchRequest', fetchRequest);
 		// fetchRequest.headers.forEach((value, key) => console.log('HttpFetchHandler.handle', key, value));
 		// request = request.clone({ headers: fetchRequest.headers });
 		// console.log('HttpFetchHandler.handle', 'requestInfo', requestInfo, 'requestInit', requestInit);
-		return from(
-			fetch(requestInfo, requestInit)
-				// fetch(fetchRequest)
-				.then((response: Response) => this.getProgress<T>(response, request))
-				.then((response: Response | HttpResponse<T>) => this.getResponse<T>(response, request))
-		).pipe(
-			catchError((error: Error) => {
-				const errorResponse: IHttpErrorResponse<T> = { error };
-				if (this.response_) {
-					errorResponse.headers = this.response_.headers;
-					errorResponse.status = this.response_.status;
-					errorResponse.statusText = this.response_.statusText;
-					errorResponse.url = this.response_.url;
-					errorResponse.request = request;
-				}
-				const httpErrorResponse = new HttpErrorResponse<T>(errorResponse);
-				// console.log('httpErrorResponse', httpErrorResponse);
-				nextError$.next(httpErrorResponse);
-				return of(this.response_) as Observable<any>;
-				// return throwError(httpErrorResponse);
-			}),
-			finalize(() => {
-				this.response_ = null;
-			})
-		);
+		// hydrate
+		const stateKey = TransferService.makeKey(request.transferKey);
+		if (isPlatformBrowser && request.hydrate && TransferService.has(stateKey)) {
+			const cached = TransferService.get(stateKey) as HttpResponse<T>; // !!! <T>
+			TransferService.remove(stateKey);
+			return of(cached);
+			// hydrate
+		} else {
+			return from(
+				fetch(requestInfo, requestInit)
+					// fetch(fetchRequest)
+					.then((response: Response) => this.getProgress<T>(response, request))
+					.then((response: Response | HttpResponse<T>) => this.getResponse<T>(response, request))
+			).pipe(
+				// hydrate
+				tap(response => {
+					if (isPlatformServer && request.hydrate) {
+						TransferService.set(stateKey, response);
+					}
+				}),
+				// hydrate
+				catchError((error: Error) => {
+					const errorResponse: IHttpErrorResponse<T> = { error };
+					if (this.response_) {
+						errorResponse.headers = this.response_.headers;
+						errorResponse.status = this.response_.status;
+						errorResponse.statusText = this.response_.statusText;
+						errorResponse.url = this.response_.url;
+						errorResponse.request = request;
+					}
+					const httpErrorResponse = new HttpErrorResponse<T>(errorResponse);
+					// console.log('httpErrorResponse', httpErrorResponse);
+					nextError$.next(httpErrorResponse);
+					return of(this.response_) as Observable<any>;
+					// return throwError(httpErrorResponse);
+				}),
+				finalize(() => {
+					this.response_ = null;
+				})
+			);
+		}
 	}
 
 	/*

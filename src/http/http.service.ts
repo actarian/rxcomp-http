@@ -101,6 +101,7 @@ export default class HttpService {
 			}),
 		)
 		return observe$;
+		/*
 		switch (options.observe || 'body') {
 			case 'body':
 				switch (request.responseType) {
@@ -134,6 +135,7 @@ export default class HttpService {
 			default:
 				throw new Error(`Unreachable: unhandled observe type ${options.observe}}`);
 		}
+		*/
 	}
 
 	static delete$<T>(url: string, options?: IHttpRequestInit<T>): Observable<T>;
