@@ -36,8 +36,10 @@ export class HttpRequest<T> {
 	readonly params!: HttpParams;
 	readonly urlWithParams: string;
 	get transferKey(): string {
-		let key: string = flatMap_(this.url, this);
+		const pathname: string = getPath_(this.url).pathname;
+		let key: string = flatMap_(pathname, this.params);
 		key = key.replace(/(\W)/gm, '_');
+		console.log('transferKey', key, pathname, this.params, this.url);
 		return key;
 	}
 	constructor(method: HttpMethodNoBodyType, url: string, options?: IHttpRequestInit<T>);
@@ -231,4 +233,25 @@ function flatMap_(s: string, x: any): string {
 		s += '_' + Object.keys(x).map(k => k + '_' + flatMap_('', x[k])).join('_');
 	}
 	return s;
-};
+}
+
+function getPath_(href: string): { href: string, protocol: string, host: string, hostname: string, port: string, pathname: string, search: string, hash: string } {
+	let protocol = '';
+	let host = '';
+	let hostname = '';
+	let port = '';
+	let pathname = '';
+	let search = '';
+	let hash = '';
+	const regExp: RegExp = /^((http\:|https\:)?\/\/|\/)?([^\/\:]+)?(\:([^\/]+))?(\/[^\?]+)?(\?[^\#]+)?(\#.+)?$/g;
+	const matches = href.matchAll(regExp);
+	for (let match of matches) {
+		protocol = match[2] || '';
+		host = hostname = match[3] || '';
+		port = match[5] || '';
+		pathname = match[6] || '';
+		search = match[7] || '';
+		hash = match[8] || '';
+	}
+	return { href, protocol, host, hostname, port, pathname, search, hash };
+}

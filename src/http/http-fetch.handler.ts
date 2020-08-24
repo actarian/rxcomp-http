@@ -22,8 +22,10 @@ export class HttpFetchHandler implements HttpHandler {
 		// console.log('HttpFetchHandler.handle', 'requestInfo', requestInfo, 'requestInit', requestInit);
 		// hydrate
 		const stateKey = TransferService.makeKey(request.transferKey);
+		console.log('HttpFetchHandler.get', 'stateKey', stateKey, 'isPlatformBrowser', isPlatformBrowser, 'hydrate', request.hydrate);
 		if (isPlatformBrowser && request.hydrate && TransferService.has(stateKey)) {
-			const cached = TransferService.get(stateKey) as HttpResponse<T>; // !!! <T>
+			const cached = TransferService.get(stateKey) as HttpResponse<T>; // !!! <T>			
+			console.log('HttpFetchHandler', cached);
 			TransferService.remove(stateKey);
 			return of(cached);
 			// hydrate
@@ -36,6 +38,7 @@ export class HttpFetchHandler implements HttpHandler {
 			).pipe(
 				// hydrate
 				tap(response => {
+					console.log('HttpFetchHandler.set', 'isPlatformServer', isPlatformServer, 'hydrate', request.hydrate, response);
 					if (isPlatformServer && request.hydrate) {
 						TransferService.set(stateKey, response);
 					}
