@@ -1,3 +1,4 @@
+import { getLocationComponents, optionsToKey } from 'rxcomp';
 import { HttpHeaders } from './http-headers';
 import { HttpParams } from './http-params';
 
@@ -36,11 +37,12 @@ export class HttpRequest<T> {
 	readonly params!: HttpParams;
 	readonly urlWithParams: string;
 	get transferKey(): string {
-		const pathname: string = getPath_(this.url).pathname;
-		const params: string = flatMap_(this.params.toObject());
-		const body: string = flatMap_(this.body);
-		const key: string = `${pathname}_${params}_${body}`.replace(/(\W)/gm, '_');
-		console.log('transferKey', key, this.url);
+		const pathname: string = getLocationComponents(this.url).pathname;
+		const paramsKey: string = optionsToKey(this.params.toObject());
+		const bodyKey: string = optionsToKey(this.body);
+		let key: string = `${this.method}-${pathname}-${paramsKey}-${bodyKey}`;
+		key = key.replace(/(\s+)|(\W+)/g, function (...matches) { return matches[1] ? '' : '_' });
+		console.log('transferKey', key);
 		return key;
 	}
 	constructor(method: HttpMethodNoBodyType, url: string, options?: IHttpRequestInit<T>);
@@ -236,38 +238,4 @@ function isBlob_(value: any): value is Blob {
 
 function isFormData_(value: any): value is FormData {
 	return typeof FormData !== 'undefined' && value instanceof FormData;
-}
-
-function flatMap_(v: any, s: string = ''): string {
-	if (typeof v === 'number') {
-		s += v.toString();
-	} else if (typeof v === 'string') {
-		s += v.substr(0, 10);
-	} else if (v && Array.isArray(v)) {
-		s += v.map(v => flatMap_(v)).join('');
-	} else if (v && typeof v === 'object') {
-		s += Object.keys(v).map(k => k + flatMap_(v[k])).join('_');
-	}
-	return `_${s}`;
-}
-
-function getPath_(href: string): { href: string, protocol: string, host: string, hostname: string, port: string, pathname: string, search: string, hash: string } {
-	let protocol = '';
-	let host = '';
-	let hostname = '';
-	let port = '';
-	let pathname = '';
-	let search = '';
-	let hash = '';
-	const regExp: RegExp = /^((http\:|https\:)?\/\/)?((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])|(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])|locahost)?(\:([^\/]+))?(\.?\/[^\?]+)?(\?[^\#]+)?(\#.+)?$/g;
-	const matches = href.matchAll(regExp);
-	for (let match of matches) {
-		protocol = match[2] || '';
-		host = hostname = match[3] || '';
-		port = match[11] || '';
-		pathname = match[12] || '';
-		search = match[13] || '';
-		hash = match[14] || '';
-	}
-	return { href, protocol, host, hostname, port, pathname, search, hash };
 }

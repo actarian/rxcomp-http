@@ -25,7 +25,7 @@ export class HttpFetchHandler implements HttpHandler {
 		// console.log('HttpFetchHandler.get', 'stateKey', stateKey, 'isPlatformBrowser', isPlatformBrowser, 'hydrate', request.hydrate);
 		let response: HttpResponse<T> | undefined;
 		if (isPlatformBrowser && request.hydrate && TransferService.has(stateKey)) {
-			let transfer: IHttpResponse<T> = TransferService.get<IHttpResponse<T>>(stateKey); // !!! <T>	
+			let transfer: IHttpResponse<T> | undefined = TransferService.get<IHttpResponse<T>>(stateKey);
 			if (transfer) {
 				response = new HttpResponse<T>(transfer);
 			}

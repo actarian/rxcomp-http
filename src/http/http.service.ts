@@ -139,23 +139,27 @@ export default class HttpService {
 	}
 
 	static delete$<T>(url: string, options?: IHttpRequestInit<T>): Observable<T>;
-	static delete$<T>(url: string, options: IHttpRequestInit<T> = {}): Observable<HttpEvent<any> | HttpResponse<T> | HttpBodyType<T>> {
-		return this.request$<T>('DELETE', url, options);
+	static delete$<T>(url: string, options: IHttpRequestInit<T>): Observable<HttpEvent<any> | HttpResponse<T> | HttpBodyType<T>>;
+	static delete$(url: string, options: IHttpRequestInit<any> = {}): Observable<HttpEvent<any> | HttpResponse<any> | HttpBodyType<any>> {
+		return this.request$<any>('DELETE', url, options);
 	}
 
 	static get$<T>(url: string, options?: IHttpRequestInit<T>): Observable<T>;
-	static get$<T>(url: string, options: IHttpRequestInit<T> = {}): Observable<HttpEvent<any> | HttpResponse<T> | HttpBodyType<T>> {
-		return this.request$<T>('GET', url, options);
+	static get$<T>(url: string, options: IHttpRequestInit<T>): Observable<HttpEvent<any> | HttpResponse<T> | HttpBodyType<T>>;
+	static get$(url: string, options: IHttpRequestInit<any> = {}): Observable<HttpEvent<any> | HttpResponse<any> | HttpBodyType<any>> {
+		return this.request$<any>('GET', url, options);
 	}
 
 	static head$<T>(url: string, options?: IHttpRequestInit<T>): Observable<T>;
-	static head$<T>(url: string, options: IHttpRequestInit<T> = {}): Observable<HttpEvent<any> | HttpResponse<T> | HttpBodyType<T>> {
-		return this.request$<T>('HEAD', url, options);
+	static head$<T>(url: string, options: IHttpRequestInit<T>): Observable<HttpEvent<any> | HttpResponse<T> | HttpBodyType<T>>;
+	static head$(url: string, options: IHttpRequestInit<any> = {}): Observable<HttpEvent<any> | HttpResponse<any> | HttpBodyType<any>> {
+		return this.request$<any>('HEAD', url, options);
 	}
 
 	static jsonp$<T>(url: string, callbackParam: string): Observable<T>;
-	static jsonp$<T>(url: string, callbackParam: string): Observable<HttpEvent<any> | HttpResponse<T> | HttpBodyType<T>> {
-		return this.request$<T>('JSONP', url, {
+	static jsonp$<T>(url: string, callbackParam: string): Observable<HttpEvent<any> | HttpResponse<T> | HttpBodyType<T>>;
+	static jsonp$(url: string, callbackParam: string): Observable<HttpEvent<any> | HttpResponse<any> | HttpBodyType<any>> {
+		return this.request$<any>('JSONP', url, {
 			params: new HttpParams().append(callbackParam, 'JSONP_CALLBACK'),
 			observe: 'body',
 			responseType: 'json',
@@ -163,23 +167,27 @@ export default class HttpService {
 	}
 
 	static options$<T>(url: string, options?: IHttpRequestInit<T>): Observable<T>;
-	static options$<T>(url: string, options: IHttpRequestInit<T> = {}): Observable<HttpEvent<any> | HttpResponse<T> | HttpBodyType<T>> {
-		return this.request$<T>('OPTIONS', url, options);
+	static options$<T>(url: string, options: IHttpRequestInit<T>): Observable<HttpEvent<any> | HttpResponse<T> | HttpBodyType<T>>;
+	static options$(url: string, options: IHttpRequestInit<any> = {}): Observable<HttpEvent<any> | HttpResponse<any> | HttpBodyType<any>> {
+		return this.request$<any>('OPTIONS', url, options);
 	}
 
 	static patch$<T>(url: string, body: any | null, options?: IHttpRequestInit<T>): Observable<T>;
-	static patch$<T>(url: string, body: any | null, options: IHttpRequestInit<T> = {}): Observable<HttpEvent<any> | HttpResponse<T> | HttpBodyType<T>> {
-		return this.request$<T>('PATCH', url, optionsWithBody_<T>(options, body));
+	static patch$<T>(url: string, body: any | null, options: IHttpRequestInit<T>): Observable<HttpEvent<any> | HttpResponse<T> | HttpBodyType<T>>;
+	static patch$(url: string, body: any | null, options: IHttpRequestInit<any> = {}): Observable<HttpEvent<any> | HttpResponse<any> | HttpBodyType<any>> {
+		return this.request$<any>('PATCH', url, optionsWithBody_<any>(options, body));
 	}
 
 	static post$<T>(url: string, body: any | null, options?: IHttpRequestInit<T>): Observable<T>;
-	static post$<T>(url: string, body: any | null, options: IHttpRequestInit<T> = {}): Observable<HttpEvent<any> | HttpResponse<T> | HttpBodyType<T>> {
-		return this.request$<T>('POST', url, optionsWithBody_<T>(options, body));
+	static post$<T>(url: string, body: any | null, options: IHttpRequestInit<T>): Observable<HttpEvent<any> | HttpResponse<T> | HttpBodyType<T>>;
+	static post$(url: string, body: any | null, options: IHttpRequestInit<any> = {}): Observable<HttpEvent<any> | HttpResponse<any> | HttpBodyType<any>> {
+		return this.request$<any>('POST', url, optionsWithBody_<any>(options, body));
 	}
 
 	static put$<T>(url: string, body: any | null, options?: IHttpRequestInit<T>): Observable<T>;
-	static put$<T>(url: string, body: any | null, options: IHttpRequestInit<T> = {}): Observable<HttpEvent<any> | HttpResponse<T> | HttpBodyType<T>> {
-		return this.request$<T>('PUT', url, optionsWithBody_<T>(options, body));
+	static put$<T>(url: string, body: any | null, options: IHttpRequestInit<T>): Observable<HttpEvent<any> | HttpResponse<T> | HttpBodyType<T>>;
+	static put$(url: string, body: any | null, options: IHttpRequestInit<any> = {}): Observable<HttpEvent<any> | HttpResponse<any> | HttpBodyType<any>> {
+		return this.request$<any>('PUT', url, optionsWithBody_<any>(options, body));
 	}
 
 	static getError<T>(error: any, response: HttpResponse<T> | null, request: HttpRequest<T> | null): HttpErrorResponse<T> {
