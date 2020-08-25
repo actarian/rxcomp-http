@@ -78,6 +78,17 @@ export class HttpResponse<T> implements IHttpResponse<T> {
 		const clone = new HttpResponse<T>(options);
 		return clone;
 	}
+	toObject(): { [key: string]: any } {
+		const response: { [key: string]: any } = {};
+		response.url = this.url;
+		response.headers = this.headers.toObject();
+		response.status = this.status;
+		response.statusText = this.statusText;
+		response.ok = this.ok;
+		response.type = this.type;
+		response.body = this.body;
+		return response;
+	}
 }
 
 export abstract class HttpResponseBase<T> {

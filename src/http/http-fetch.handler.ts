@@ -22,13 +22,19 @@ export class HttpFetchHandler implements HttpHandler {
 		// console.log('HttpFetchHandler.handle', 'requestInfo', requestInfo, 'requestInit', requestInit);
 		// hydrate
 		const stateKey = TransferService.makeKey(request.transferKey);
-		console.log('HttpFetchHandler.get', 'stateKey', stateKey, 'isPlatformBrowser', isPlatformBrowser, 'hydrate', request.hydrate);
+		// console.log('HttpFetchHandler.get', 'stateKey', stateKey, 'isPlatformBrowser', isPlatformBrowser, 'hydrate', request.hydrate);
+		let response: HttpResponse<T> | undefined;
 		if (isPlatformBrowser && request.hydrate && TransferService.has(stateKey)) {
-			const cached = TransferService.get(stateKey) as HttpResponse<T>; // !!! <T>			
-			console.log('HttpFetchHandler', cached);
+			let transfer: IHttpResponse<T> = TransferService.get<IHttpResponse<T>>(stateKey); // !!! <T>	
+			if (transfer) {
+				response = new HttpResponse<T>(transfer);
+			}
+			// console.log('HttpFetchHandler', cached);
 			TransferService.remove(stateKey);
-			return of(cached);
-			// hydrate
+		}
+		// hydrate
+		if (response) {
+			return of(response);
 		} else {
 			return from(
 				fetch(requestInfo, requestInit)
@@ -38,9 +44,9 @@ export class HttpFetchHandler implements HttpHandler {
 			).pipe(
 				// hydrate
 				tap(response => {
-					console.log('HttpFetchHandler.set', 'isPlatformServer', isPlatformServer, 'hydrate', request.hydrate, response);
+					// console.log('HttpFetchHandler.set', 'isPlatformServer', isPlatformServer, 'hydrate', request.hydrate, response);
 					if (isPlatformServer && request.hydrate) {
-						TransferService.set(stateKey, response);
+						TransferService.set(stateKey, response.toObject());
 					}
 				}),
 				// hydrate

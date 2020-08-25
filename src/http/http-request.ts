@@ -37,9 +37,10 @@ export class HttpRequest<T> {
 	readonly urlWithParams: string;
 	get transferKey(): string {
 		const pathname: string = getPath_(this.url).pathname;
-		let key: string = flatMap_(pathname, this.params);
-		key = key.replace(/(\W)/gm, '_');
-		console.log('transferKey', key, pathname, this.params, this.url);
+		const params: string = flatMap_(this.params.toObject());
+		const body: string = flatMap_(this.body);
+		const key: string = `${pathname}_${params}_${body}`.replace(/(\W)/gm, '_');
+		console.log('transferKey', key, this.url);
 		return key;
 	}
 	constructor(method: HttpMethodNoBodyType, url: string, options?: IHttpRequestInit<T>);
@@ -197,6 +198,19 @@ export class HttpRequest<T> {
 		const clone = new HttpRequest<T>(this.method as HttpMethodBodyType, this.url, this.body as HttpBodyType<T>, options);
 		return clone;
 	}
+	toObject(): { [key: string]: any } {
+		const request: { [key: string]: any } = {};
+		request.url = this.url;
+		request.method = this.method;
+		request.headers = this.headers.toObject();
+		request.params = this.params.toObject();
+		request.body = this.body;
+		request.reportProgress = this.reportProgress;
+		request.responseType = this.responseType;
+		request.withCredentials = this.withCredentials;
+		request.observe = this.observe;
+		return request;
+	}
 }
 
 function methodHasBody_(method: string): boolean {
@@ -224,15 +238,17 @@ function isFormData_(value: any): value is FormData {
 	return typeof FormData !== 'undefined' && value instanceof FormData;
 }
 
-function flatMap_(s: string, x: any): string {
-	if (typeof x === 'number') {
-		s += x.toString();
-	} else if (typeof x === 'string') {
-		s += x.substr(0, 10);
-	} else if (x && typeof x === 'object') {
-		s += '_' + Object.keys(x).map(k => k + '_' + flatMap_('', x[k])).join('_');
+function flatMap_(v: any, s: string = ''): string {
+	if (typeof v === 'number') {
+		s += v.toString();
+	} else if (typeof v === 'string') {
+		s += v.substr(0, 10);
+	} else if (v && Array.isArray(v)) {
+		s += v.map(v => flatMap_(v)).join('');
+	} else if (v && typeof v === 'object') {
+		s += Object.keys(v).map(k => k + flatMap_(v[k])).join('_');
 	}
-	return s;
+	return `_${s}`;
 }
 
 function getPath_(href: string): { href: string, protocol: string, host: string, hostname: string, port: string, pathname: string, search: string, hash: string } {
@@ -243,15 +259,15 @@ function getPath_(href: string): { href: string, protocol: string, host: string,
 	let pathname = '';
 	let search = '';
 	let hash = '';
-	const regExp: RegExp = /^((http\:|https\:)?\/\/|\/)?([^\/\:]+)?(\:([^\/]+))?(\/[^\?]+)?(\?[^\#]+)?(\#.+)?$/g;
+	const regExp: RegExp = /^((http\:|https\:)?\/\/)?((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])|(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])|locahost)?(\:([^\/]+))?(\.?\/[^\?]+)?(\?[^\#]+)?(\#.+)?$/g;
 	const matches = href.matchAll(regExp);
 	for (let match of matches) {
 		protocol = match[2] || '';
 		host = hostname = match[3] || '';
-		port = match[5] || '';
-		pathname = match[6] || '';
-		search = match[7] || '';
-		hash = match[8] || '';
+		port = match[11] || '';
+		pathname = match[12] || '';
+		search = match[13] || '';
+		hash = match[14] || '';
 	}
 	return { href, protocol, host, hostname, port, pathname, search, hash };
 }

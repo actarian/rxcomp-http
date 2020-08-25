@@ -91,6 +91,18 @@ export class HttpParams {
 		}).filter(keyValue => keyValue !== '').join('&');
 	}
 
+	toObject(): { [keys: string]: any } {
+		let params: { [keys: string]: any } = {};
+		this.keys().map((key: string) => {
+			const values = this.params_.get(key);
+			if (values) {
+				params[key] = values;
+			}
+			// return this.encoder.encodeKey(key) + (values ? '=' + values.map(x => this.encoder.encodeValue(x)).join('&') : '');
+		});
+		return params;
+	}
+
 	private clone_(): HttpParams {
 		const clone = new HttpParams(undefined, this.encoder);
 		this.params_.forEach((value, key) => {

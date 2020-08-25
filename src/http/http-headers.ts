@@ -91,6 +91,14 @@ export class HttpHeaders implements Headers {
 		return headers;
 	}
 
+	toObject(): { [key: string]: string } {
+		const headers: { [key: string]: string } = {};
+		this.forEach((value, key) => {
+			headers[key] = value;
+		});
+		return headers;
+	}
+
 	private clone_(): HttpHeaders {
 		const clone = new HttpHeaders();
 		this.headers_.forEach((value, key) => {
