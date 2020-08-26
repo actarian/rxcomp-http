@@ -72,49 +72,6 @@ export class HttpFetchHandler implements HttpHandler {
 		}
 	}
 
-	/*
-	onProgress(value: Uint8Array, done: boolean, request, reader, progress) {
-		console.log("value:", value);
-		if (value || done) {
-			console.log("upload complete, request.bodyUsed:", request.bodyUsed);
-			progress.value = progress.max;
-			return reader.closed.then(() => fileUpload);
-		};
-		console.log("upload progress:", value);
-		if (progress.value < file.size) {
-			progress.value += 1;
-		}
-		return reader.read().then(({ value, done }) => this.onProgress(value, done, request, reader, progress));
-	};
-
-	getProgress_(request) {
-		const uploadProgress = new ReadableStream({
-			start(controller) {
-				console.log("starting upload, request.bodyUsed:", request.bodyUsed);
-				controller.enqueue(request.bodyUsed);
-			},
-			pull(controller) {
-				if (request.bodyUsed) {
-					controller.close();
-				}
-				controller.enqueue(request.bodyUsed);
-				console.log("pull, request.bodyUsed:", request.bodyUsed);
-			},
-			cancel(reason) {
-				console.log(reason);
-			}
-		});
-
-		const [fileUpload, reader] = [
-			upload(request).catch(e => {
-				reader.cancel();
-				console.log(e);
-				throw e
-			}), uploadProgress.getReader()
-		];
-	}
-	*/
-
 	getProgress<T>(response: Response, request: HttpRequest<any>): Promise<Response | HttpResponse<T>> {
 		// console.log('HttpFetchHandler.setProgress', request.reportProgress, response.body);
 		const clonedBody = response.clone().body;
@@ -271,5 +228,49 @@ export class HttpFetchHandler implements HttpHandler {
 		});
 		return readableStream;
 	}
+
+	/*
+	onProgress(value: Uint8Array, done: boolean, request, reader, progress) {
+		console.log("value:", value);
+		if (value || done) {
+			console.log("upload complete, request.bodyUsed:", request.bodyUsed);
+			progress.value = progress.max;
+			return reader.closed.then(() => fileUpload);
+		};
+		console.log("upload progress:", value);
+		if (progress.value < file.size) {
+			progress.value += 1;
+		}
+		return reader.read().then(({ value, done }) => this.onProgress(value, done, request, reader, progress));
+	}
+	*/
+
+	/*
+	getProgress_(request) {
+		const uploadProgress = new ReadableStream({
+			start(controller) {
+				console.log("starting upload, request.bodyUsed:", request.bodyUsed);
+				controller.enqueue(request.bodyUsed);
+			},
+			pull(controller) {
+				if (request.bodyUsed) {
+					controller.close();
+				}
+				controller.enqueue(request.bodyUsed);
+				console.log("pull, request.bodyUsed:", request.bodyUsed);
+			},
+			cancel(reason) {
+				console.log(reason);
+			}
+		});
+		const [fileUpload, reader] = [
+			upload(request).catch(e => {
+				reader.cancel();
+				console.log(e);
+				throw e
+			}), uploadProgress.getReader()
+		];
+	}
+	*/
 
 }
