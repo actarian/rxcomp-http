@@ -9533,6 +9533,48 @@ function _assertThisInitialized(self) {
   }
 
   return self;
+}
+
+function _unsupportedIterableToArray(o, minLen) {
+  if (!o) return;
+  if (typeof o === "string") return _arrayLikeToArray(o, minLen);
+  var n = Object.prototype.toString.call(o).slice(8, -1);
+  if (n === "Object" && o.constructor) n = o.constructor.name;
+  if (n === "Map" || n === "Set") return Array.from(o);
+  if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+}
+
+function _arrayLikeToArray(arr, len) {
+  if (len == null || len > arr.length) len = arr.length;
+
+  for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
+
+  return arr2;
+}
+
+function _createForOfIteratorHelperLoose(o, allowArrayLike) {
+  var it;
+
+  if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) {
+    if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
+      if (it) o = it;
+      var i = 0;
+      return function () {
+        if (i >= o.length) return {
+          done: true
+        };
+        return {
+          done: false,
+          value: o[i++]
+        };
+      };
+    }
+
+    throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+  }
+
+  it = o[Symbol.iterator]();
+  return it.next.bind(it);
 }var CONTEXTS = {};
 var NODES = {};
 
@@ -10145,34 +10187,7 @@ JsonComponent.meta = {
   };
 
   return Pipe;
-}();var JsonPipe = function (_Pipe) {
-  _inheritsLoose(JsonPipe, _Pipe);
-
-  function JsonPipe() {
-    return _Pipe.apply(this, arguments) || this;
-  }
-
-  JsonPipe.transform = function transform(value) {
-    var cache = new Map();
-    var json = JSON.stringify(value, function (key, value) {
-      if (typeof value === 'object' && value != null) {
-        if (cache.has(value)) {
-          return '#ref';
-        }
-
-        cache.set(value, true);
-      }
-
-      return value;
-    }, 2);
-    return json;
-  };
-
-  return JsonPipe;
-}(Pipe);
-JsonPipe.meta = {
-  name: 'json'
-};var ORDER = [Structure, Component, Directive];
+}();var ORDER = [Structure, Component, Directive];
 
 var Platform = function () {
   function Platform() {}
@@ -10379,7 +10394,89 @@ var PLATFORM_NODE = typeof process !== 'undefined' && process.versions != null &
 var PLATFORM_WEB_WORKER = typeof self === 'object' && self.constructor && self.constructor.name === 'DedicatedWorkerGlobalScope';
 var isPlatformServer = PLATFORM_NODE;
 var isPlatformBrowser = !PLATFORM_NODE && PLATFORM_BROWSER;
-var isPlatformWorker = PLATFORM_WEB_WORKER;var ID = 0;
+var isPlatformWorker = PLATFORM_WEB_WORKER;var Serializer = function () {
+  function Serializer() {}
+
+  Serializer.encode = function encode(value, encoders) {
+    if (encoders === void 0) {
+      encoders = [encodeJson];
+    }
+
+    return encoders.reduce(function (p, c) {
+      return c(p);
+    }, value);
+  };
+
+  Serializer.decode = function decode(value, decoders) {
+    if (decoders === void 0) {
+      decoders = [decodeJson];
+    }
+
+    return decoders.reduce(function (p, c) {
+      return c(p);
+    }, value);
+  };
+
+  return Serializer;
+}();
+function encodeJson(value, circularRef, space) {
+  var decoded;
+
+  try {
+    var pool = [];
+    var json = JSON.stringify(value, function (key, value) {
+      if (typeof value === 'object' && value != null) {
+        if (pool.indexOf(value) !== -1) {
+          return circularRef;
+        }
+
+        pool.push(value);
+      }
+
+      return value;
+    }, space);
+    decoded = json;
+  } catch (error) {}
+
+  return decoded;
+}
+function encodeJsonWithOptions(circularRef, space) {
+  return function (value) {
+    return encodeJson(value, circularRef, space);
+  };
+}
+function decodeJson(value) {
+  var decoded;
+
+  if (value) {
+    try {
+      decoded = JSON.parse(value);
+    } catch (error) {}
+  }
+
+  return decoded;
+}
+function encodeBase64(value) {
+  return isPlatformBrowser ? atob(value) : Buffer.from(value).toString('base64');
+}
+function decodeBase64(value) {
+  return isPlatformBrowser ? btoa(value) : Buffer.from(value, 'base64').toString();
+}var JsonPipe = function (_Pipe) {
+  _inheritsLoose(JsonPipe, _Pipe);
+
+  function JsonPipe() {
+    return _Pipe.apply(this, arguments) || this;
+  }
+
+  JsonPipe.transform = function transform(value) {
+    return Serializer.encode(value, [encodeJsonWithOptions('#ref', 2)]);
+  };
+
+  return JsonPipe;
+}(Pipe);
+JsonPipe.meta = {
+  name: 'json'
+};var ID = 0;
 
 var Module = function () {
   function Module() {
@@ -10410,7 +10507,7 @@ var Module = function () {
     return instances;
   };
 
-  _proto.makeInstance = function makeInstance(node, factory, selector, parentInstance, args) {
+  _proto.makeInstance = function makeInstance(node, factory, selector, parentInstance, args, inject) {
     var _this2 = this;
 
     if (parentInstance || node.parentNode) {
@@ -10422,6 +10519,17 @@ var Module = function () {
       }
 
       var instance = _construct(factory, args || []);
+
+      if (inject) {
+        Object.keys(inject).forEach(function (key) {
+          Object.defineProperty(instance, key, {
+            value: inject[key],
+            enumerable: true,
+            configurable: false,
+            writable: false
+          });
+        });
+      }
 
       var context = Module.makeContext(this, instance, parentInstance, node, factory, selector);
 
@@ -11212,13 +11320,46 @@ CoreModule.meta = {
   };
 
   return Browser;
-}(Platform);var TransferService = function () {
+}(Platform);function getLocationComponents(href) {
+  var protocol = '';
+  var host = '';
+  var hostname = '';
+  var port = '';
+  var pathname = '';
+  var search = '';
+  var hash = '';
+  var regExp = /^((http\:|https\:)?\/\/)?((([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])|(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])|locahost)?(\:([^\/]+))?(\.?\/[^\?]+)?(\?[^\#]+)?(\#.+)?$/g;
+  var matches = href.matchAll(regExp);
+
+  for (var _iterator = _createForOfIteratorHelperLoose(matches), _step; !(_step = _iterator()).done;) {
+    var match = _step.value;
+    protocol = match[2] || '';
+    host = hostname = match[3] || '';
+    port = match[11] || '';
+    pathname = match[12] || '';
+    search = match[13] || '';
+    hash = match[14] || '';
+  }
+
+  return {
+    href: href,
+    protocol: protocol,
+    host: host,
+    hostname: hostname,
+    port: port,
+    pathname: pathname,
+    search: search,
+    hash: hash
+  };
+}var TransferService = function () {
   function TransferService() {}
 
-  TransferService.makeKey = function makeKey(url, params) {
-    url = params ? flatMap_(url, params) : url;
-    url = url.replace(/(\W)/gm, '_');
-    var key = "rxcomp_hydrate_" + url;
+  TransferService.makeKey = function makeKey(base, params) {
+    var paramsKey = params ? optionsToKey(params) : '';
+    var key = "rxcomp-hydrate-" + base + "-" + paramsKey;
+    key = key.replace(/(\s+)|(\W+)/g, function () {
+      return (arguments.length <= 1 ? undefined : arguments[1]) ? '' : '_';
+    });
     return key;
   };
 
@@ -11232,14 +11373,14 @@ CoreModule.meta = {
 
     if (node && node.firstChild) {
       var json = node.firstChild.nodeValue;
-      return json ? this.decode(json) : undefined;
+      return json ? Serializer.decode(json, [decodeJson]) : undefined;
     } else {
       return undefined;
     }
   };
 
   TransferService.set = function set(key, value) {
-    var json = this.encode(value);
+    var json = Serializer.encode(value, [encodeJson]);
 
     if (!json) {
       return;
@@ -11267,55 +11408,26 @@ CoreModule.meta = {
     }
   };
 
-  TransferService.encode = function encode(value) {
-    var encodedJson = null;
-
-    try {
-      var cache = new Map();
-      var json = JSON.stringify(value, function (key, value) {
-        if (typeof value === 'object' && value != null) {
-          if (cache.has(value)) {
-            return;
-          }
-
-          cache.set(value, true);
-        }
-
-        return value;
-      });
-      encodedJson = btoa(encodeURIComponent(json));
-    } catch (error) {}
-
-    return encodedJson;
-  };
-
-  TransferService.decode = function decode(encodedJson) {
-    var value;
-
-    if (encodedJson) {
-      try {
-        value = JSON.parse(decodeURIComponent(atob(encodedJson)));
-      } catch (error) {
-        value = encodedJson;
-      }
-    }
-
-    return value;
-  };
-
   return TransferService;
 }();
+function optionsToKey(v, s) {
+  if (s === void 0) {
+    s = '';
+  }
 
-function flatMap_(s, x) {
-  if (typeof x === 'number') {
-    s += x.toString();
-  } else if (typeof x === 'string') {
-    s += x.substr(0, 10);
-  } else if (x && typeof x === 'object') {
-    s += '_' + Object.keys(x).map(function (k) {
-      return k + '_' + flatMap_('', x[k]);
-    }).join('_');
+  if (typeof v === 'number') {
+    s += '-' + v.toString();
+  } else if (typeof v === 'string') {
+    s += '-' + v.substr(0, 20);
+  } else if (v && Array.isArray(v)) {
+    s += '-' + v.map(function (v) {
+      return optionsToKey(v);
+    }).join('');
+  } else if (v && typeof v === 'object') {
+    s += '-' + Object.keys(v).map(function (k) {
+      return k + optionsToKey(v[k]);
+    }).join('-');
   }
 
   return s;
-}exports.Browser=Browser;exports.ClassDirective=ClassDirective;exports.Component=Component;exports.Context=Context;exports.CoreModule=CoreModule;exports.DefaultErrorHandler=DefaultErrorHandler;exports.Directive=Directive;exports.ErrorInterceptorHandler=ErrorInterceptorHandler;exports.ErrorInterceptors=ErrorInterceptors;exports.EventDirective=EventDirective;exports.ExpressionError=ExpressionError;exports.Factory=Factory;exports.ForItem=ForItem;exports.ForStructure=ForStructure;exports.HrefDirective=HrefDirective;exports.IfStructure=IfStructure;exports.InnerHtmlDirective=InnerHtmlDirective;exports.JsonComponent=JsonComponent;exports.JsonPipe=JsonPipe;exports.Module=Module;exports.ModuleError=ModuleError;exports.PLATFORM_BROWSER=PLATFORM_BROWSER;exports.PLATFORM_JS_DOM=PLATFORM_JS_DOM;exports.PLATFORM_NODE=PLATFORM_NODE;exports.PLATFORM_WEB_WORKER=PLATFORM_WEB_WORKER;exports.Pipe=Pipe;exports.Platform=Platform;exports.SrcDirective=SrcDirective;exports.Structure=Structure;exports.StyleDirective=StyleDirective;exports.TransferService=TransferService;exports.errors$=errors$;exports.getContext=getContext;exports.getContextByNode=getContextByNode;exports.getHost=getHost;exports.getParsableContextByNode=getParsableContextByNode;exports.isPlatformBrowser=isPlatformBrowser;exports.isPlatformServer=isPlatformServer;exports.isPlatformWorker=isPlatformWorker;exports.nextError$=nextError$;return exports;}({},rxjs,rxjs.operators));
+}exports.Browser=Browser;exports.ClassDirective=ClassDirective;exports.Component=Component;exports.Context=Context;exports.CoreModule=CoreModule;exports.DefaultErrorHandler=DefaultErrorHandler;exports.Directive=Directive;exports.ErrorInterceptorHandler=ErrorInterceptorHandler;exports.ErrorInterceptors=ErrorInterceptors;exports.EventDirective=EventDirective;exports.ExpressionError=ExpressionError;exports.Factory=Factory;exports.ForItem=ForItem;exports.ForStructure=ForStructure;exports.HrefDirective=HrefDirective;exports.IfStructure=IfStructure;exports.InnerHtmlDirective=InnerHtmlDirective;exports.JsonComponent=JsonComponent;exports.JsonPipe=JsonPipe;exports.Module=Module;exports.ModuleError=ModuleError;exports.PLATFORM_BROWSER=PLATFORM_BROWSER;exports.PLATFORM_JS_DOM=PLATFORM_JS_DOM;exports.PLATFORM_NODE=PLATFORM_NODE;exports.PLATFORM_WEB_WORKER=PLATFORM_WEB_WORKER;exports.Pipe=Pipe;exports.Platform=Platform;exports.Serializer=Serializer;exports.SrcDirective=SrcDirective;exports.Structure=Structure;exports.StyleDirective=StyleDirective;exports.TransferService=TransferService;exports.decodeBase64=decodeBase64;exports.decodeJson=decodeJson;exports.encodeBase64=encodeBase64;exports.encodeJson=encodeJson;exports.encodeJsonWithOptions=encodeJsonWithOptions;exports.errors$=errors$;exports.getContext=getContext;exports.getContextByNode=getContextByNode;exports.getHost=getHost;exports.getLocationComponents=getLocationComponents;exports.getParsableContextByNode=getParsableContextByNode;exports.isPlatformBrowser=isPlatformBrowser;exports.isPlatformServer=isPlatformServer;exports.isPlatformWorker=isPlatformWorker;exports.nextError$=nextError$;exports.optionsToKey=optionsToKey;return exports;}({},rxjs,rxjs.operators));

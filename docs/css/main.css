@@ -543,13 +543,9 @@ body {
   background: #212121;
   color: #8f929b; }
 
-/*
-.app {
-	&:not(.init) {
-		display: none;
-	}
-}
-*/
+.app:not(.init) {
+  display: none; }
+
 .app {
   display: flex;
   align-items: flex-start;

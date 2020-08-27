@@ -1,4 +1,4 @@
-import { Component, errors$, IFactoryMeta } from 'rxcomp';
+import { Component, errors$, getContext, IFactoryMeta } from 'rxcomp';
 import { first, takeUntil } from 'rxjs/operators';
 import { HttpService } from '../../../src/rxcomp-http';
 import { IResponseData, ITodoItem } from './todo/todo';
@@ -9,6 +9,8 @@ export default class AppComponent extends Component {
 
 	onInit() {
 		// console.log('AppComponent.onInit', this);
+		const { node } = getContext(this);
+		node.classList.add('init');
 		/*
 		const payload = { query: `{ hello }` };
 		*/

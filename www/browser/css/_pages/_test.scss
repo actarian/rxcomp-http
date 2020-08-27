@@ -12,13 +12,11 @@ body {
 	color: $foreground-secondary;
 }
 
-/*
 .app {
 	&:not(.init) {
 		display: none;
 	}
 }
-*/
 
 .app {
 	display: flex;

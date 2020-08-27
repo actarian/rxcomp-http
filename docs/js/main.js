@@ -222,6 +222,14 @@ function _wrapNativeSuper(Class) {
     return headers;
   };
 
+  _proto.toObject = function toObject() {
+    var headers = {};
+    this.forEach(function (value, key) {
+      headers[key] = value;
+    });
+    return headers;
+  };
+
   _proto.clone_ = function clone_() {
     var clone = new HttpHeaders();
     this.headers_.forEach(function (value, key) {
@@ -310,6 +318,18 @@ function _wrapNativeSuper(Class) {
     return clone;
   };
 
+  _proto2.toObject = function toObject() {
+    var response = {};
+    response.url = this.url;
+    response.headers = this.headers.toObject();
+    response.status = this.status;
+    response.statusText = this.statusText;
+    response.ok = this.ok;
+    response.type = this.type;
+    response.body = this.body;
+    return response;
+  };
+
   return HttpResponse;
 }();var HttpFetchHandler = function () {
   function HttpFetchHandler() {
@@ -328,11 +348,20 @@ function _wrapNativeSuper(Class) {
     var requestInfo = request.urlWithParams;
     var requestInit = request.toInitRequest();
     var stateKey = rxcomp.TransferService.makeKey(request.transferKey);
+    var response;
 
     if (rxcomp.isPlatformBrowser && request.hydrate && rxcomp.TransferService.has(stateKey)) {
-      var cached = rxcomp.TransferService.get(stateKey);
+      var transfer = rxcomp.TransferService.get(stateKey);
+
+      if (transfer) {
+        response = new HttpResponse(transfer);
+      }
+
       rxcomp.TransferService.remove(stateKey);
-      return rxjs.of(cached);
+    }
+
+    if (response) {
+      return rxjs.of(response);
     } else {
       return rxjs.from(fetch(requestInfo, requestInit).then(function (response) {
         return _this.getProgress(response, request);
@@ -340,7 +369,7 @@ function _wrapNativeSuper(Class) {
         return _this.getResponse(response, request);
       })).pipe(operators.tap(function (response) {
         if (rxcomp.isPlatformServer && request.hydrate) {
-          rxcomp.TransferService.set(stateKey, response);
+          rxcomp.TransferService.set(stateKey, response.toObject());
         }
       }), operators.catchError(function (error) {
         var errorResponse = {
@@ -666,6 +695,20 @@ var HttpParams = function () {
     }).join('&');
   };
 
+  _proto2.toObject = function toObject() {
+    var _this2 = this;
+
+    var params = {};
+    this.keys().map(function (key) {
+      var values = _this2.params_.get(key);
+
+      if (values) {
+        params[key] = values;
+      }
+    });
+    return params;
+  };
+
   _proto2.clone_ = function clone_() {
     var clone = new HttpParams(undefined, this.encoder);
     this.params_.forEach(function (value, key) {
@@ -835,11 +878,31 @@ function encodeParam_(v) {
     return clone;
   };
 
+  _proto.toObject = function toObject() {
+    var request = {};
+    request.url = this.url;
+    request.method = this.method;
+    request.headers = this.headers.toObject();
+    request.params = this.params.toObject();
+    request.body = this.body;
+    request.reportProgress = this.reportProgress;
+    request.responseType = this.responseType;
+    request.withCredentials = this.withCredentials;
+    request.observe = this.observe;
+    return request;
+  };
+
   _createClass(HttpRequest, [{
     key: "transferKey",
     get: function get() {
-      var key = flatMap_(this.url, this);
-      key = key.replace(/(\W)/gm, '_');
+      var pathname = rxcomp.getLocationComponents(this.url).pathname;
+      var paramsKey = rxcomp.optionsToKey(this.params.toObject());
+      var bodyKey = rxcomp.optionsToKey(this.body);
+      var key = this.method + "-" + pathname + "-" + paramsKey + "-" + bodyKey;
+      key = key.replace(/(\s+)|(\W+)/g, function () {
+        return (arguments.length <= 1 ? undefined : arguments[1]) ? '' : '_';
+      });
+      console.log('transferKey', key);
       return key;
     }
   }]);
@@ -871,20 +934,6 @@ function isBlob_(value) {
 
 function isFormData_(value) {
   return typeof FormData !== 'undefined' && value instanceof FormData;
-}
-
-function flatMap_(s, x) {
-  if (typeof x === 'number') {
-    s += x.toString();
-  } else if (typeof x === 'string') {
-    s += x.substr(0, 10);
-  } else if (x && typeof x === 'object') {
-    s += '_' + Object.keys(x).map(function (k) {
-      return k + '_' + flatMap_('', x[k]);
-    }).join('_');
-  }
-
-  return s;
 }var HttpService = function () {
   function HttpService() {}
 
@@ -1111,6 +1160,10 @@ function optionsWithBody_(options, body) {
   _proto.onInit = function onInit() {
     var _this2 = this;
 
+    var _getContext = rxcomp.getContext(this),
+        node = _getContext.node;
+
+    node.classList.add('init');
     var methodUrl = "/rxcomp-http/data/get-todos.json";
     HttpService.get$(methodUrl).pipe(operators.first()).subscribe(function (response) {
       _this2.items = response.data.getTodos;
