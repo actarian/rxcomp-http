@@ -8,8 +8,8 @@
 :--------------------|:----------------------------------------------------------------------------------------------|
 rxcomp-http.min.js   | ![](https://img.badgesize.io/https://unpkg.com/rxcomp-http@1.0.0-beta.11/dist/umd/rxcomp-http.min.js.svg?compression=gzip)
 rxcomp-http.min.js   | ![](https://img.badgesize.io/https://unpkg.com/rxcomp-http@1.0.0-beta.11/dist/umd/rxcomp-http.min.js.svg)
-rxcomp.min.js        | ![](https://img.badgesize.io/https://unpkg.com/rxcomp@1.0.0-beta.13/dist/umd/rxcomp.min.js.svg?compression=gzip)
-rxcomp.min.js        | ![](https://img.badgesize.io/https://unpkg.com/rxcomp@1.0.0-beta.13/dist/umd/rxcomp.min.js.svg)
+rxcomp.min.js        | ![](https://img.badgesize.io/https://unpkg.com/rxcomp@1.0.0-beta.14/dist/umd/rxcomp.min.js.svg?compression=gzip)
+rxcomp.min.js        | ![](https://img.badgesize.io/https://unpkg.com/rxcomp@1.0.0-beta.14/dist/umd/rxcomp.min.js.svg)
 rxjs.min.js          | ![](https://img.badgesize.io/https://unpkg.com/rxjs@6.6.2/bundles/rxjs.umd.min.js.svg?compression=gzip)
 rxjs.min.js          | ![](https://img.badgesize.io/https://unpkg.com/rxjs@6.6.2/bundles/rxjs.umd.min.js.svg)
  
@@ -35,7 +35,7 @@ For CDN, you can use unpkg
 
 ```html
 <script src="https://unpkg.com/rxjs@6.6.2/bundles/rxjs.umd.min.js" crossorigin="anonymous" SameSite="none Secure"></script>
-<script src="https://unpkg.com/rxcomp@1.0.0-beta.13/dist/umd/rxcomp.min.js" crossorigin="anonymous" SameSite="none Secure"></script>  
+<script src="https://unpkg.com/rxcomp@1.0.0-beta.14/dist/umd/rxcomp.min.js" crossorigin="anonymous" SameSite="none Secure"></script>  
 <script src="https://unpkg.com/rxcomp-http@1.0.0-beta.11/dist/umd/rxcomp-http.min.js" crossorigin="anonymous" SameSite="none Secure"></script>  
 ```
 
@@ -63,13 +63,74 @@ export default class AppModule extends Module {}
 AppModule.meta = {
     imports: [
         CoreModule,
-        HttpModule.useInterceptors([CustomInterceptor]),
+        HttpModule,
     ],
     declarations: [],
     bootstrap: AppComponent,
 };
 
 Browser.bootstrap(AppModule);
+```
+___
+### HttpService
+Import `HttpService` and call any CRUD method as `Observable`.
+
+```javascript
+import { HttpService } from 'rxcomp-http';
+
+HttpService.get$<IResponseData>(methodUrl).pipe(
+  first(),
+).subscribe((response: IResponseData) => {
+  this.items = response.data.getTodos;
+  this.pushChanges();
+}, error => console.log);
+```
+___
+### Interceptors
+You can create your custom interceptors implementing `IHttpInterceptors`.
+
+```javascript
+import { IHttpInterceptor } from 'rxcomp-http';
+
+export class CustomRequestInterceptor implements IHttpInterceptor {
+    intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+        if (shouldCancelRequest) {
+            return EMPTY;
+        }
+    		return next.handle(request);
+    }
+}
+
+export class CustomResponseInterceptor implements IHttpInterceptor {
+    intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+        return next.handle(request).pipe(
+            tap(event => {
+                if (event instanceof HttpResponse) {
+                    console.log('CustomResponseInterceptor.status', event.status);
+                    console.log('CustomResponseInterceptor.filter', request.params.get('filter'));
+                }
+            })
+        );
+    }
+}
+```
+
+Add your custom interceptors in the AppModule.
+
+```javascript
+
+AppModule.meta = {
+    imports: [
+        CoreModule,
+        HttpModule.useInterceptors([
+          CustomRequestInterceptor, 
+          CustomResponseInterceptor
+        ]),
+    ],
+    declarations: [],
+    bootstrap: AppComponent,
+};
+
 ```
 ___
 ### Browser Compatibility

@@ -5,23 +5,33 @@ import { HttpEvent, HttpHandler, HttpRequest, HttpResponse, IHttpInterceptor } f
 
 const cancelRequest: boolean = false;
 
-export class CustomInterceptor implements IHttpInterceptor {
-    intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-        if (cancelRequest) {
-            return EMPTY;
-        }
-        const clonedRequest = request.clone({
-            url: request.url,
-        });
-        // console.log('CustomInterceptor.clonedRequest', clonedRequest);
-        return next.handle(clonedRequest);
-        return next.handle(request).pipe(
-            tap(event => {
-                if (event instanceof HttpResponse) {
-                    console.log('CustomInterceptor.status', event.status);
-                    console.log('CustomInterceptor.filter', request.params.get('filter'));
-                }
-            })
-        );
-    }
+export class CustomRequestInterceptor implements IHttpInterceptor {
+	intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+		if (cancelRequest) {
+			return EMPTY;
+		}
+		return next.handle(request);
+	}
+}
+
+export class CustomResponseInterceptor implements IHttpInterceptor {
+	intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+		return next.handle(request).pipe(
+			tap(event => {
+				if (event instanceof HttpResponse) {
+					console.log('CustomResponseInterceptor.status', event.status);
+					console.log('CustomResponseInterceptor.filter', request.params.get('filter'));
+				}
+			})
+		);
+	}
+}
+
+export class CustomRequestCloneInterceptor implements IHttpInterceptor {
+	intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+		const clonedRequest = request.clone({
+			url: request.url,
+		});
+		return next.handle(clonedRequest);
+	}
 }

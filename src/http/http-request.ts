@@ -42,7 +42,7 @@ export class HttpRequest<T> {
 		const bodyKey: string = optionsToKey(this.body);
 		let key: string = `${this.method}-${pathname}-${paramsKey}-${bodyKey}`;
 		key = key.replace(/(\s+)|(\W+)/g, function (...matches) { return matches[1] ? '' : '_' });
-		console.log('transferKey', key);
+		// console.log('transferKey', key);
 		return key;
 	}
 	constructor(method: HttpMethodNoBodyType, url: string, options?: IHttpRequestInit<T>);

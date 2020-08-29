@@ -1,5 +1,5 @@
 /**
- * @license rxcomp-http v1.0.0-beta.13
+ * @license rxcomp-http v1.0.0-beta.14
  * (c) 2020 Luca Zampetti <lzampetti@gmail.com>
  * License: MIT
  */
@@ -200,9 +200,9 @@ function _wrapNativeSuper(Class) {
     return clone;
   };
 
-  _proto["delete"] = function _delete(key) {
+  _proto.delete = function _delete(key) {
     var clone = this.clone_();
-    clone.headers_["delete"](key);
+    clone.headers_.delete(key);
     return clone;
   };
 
@@ -459,7 +459,7 @@ function _wrapNativeSuper(Class) {
           } else {
             return reject(_this2.response_);
           }
-        })["catch"](function (err) {
+        }).catch(function (err) {
           return console.log("upload error:", err);
         });
       });
@@ -675,9 +675,9 @@ var HttpParams = function () {
     return clone;
   };
 
-  _proto2["delete"] = function _delete(key) {
+  _proto2.delete = function _delete(key) {
     var clone = this.clone_();
-    clone.params_["delete"](key);
+    clone.params_.delete(key);
     return clone;
   };
 
@@ -902,7 +902,6 @@ function encodeParam_(v) {
       key = key.replace(/(\s+)|(\W+)/g, function () {
         return (arguments.length <= 1 ? undefined : arguments[1]) ? '' : '_';
       });
-      console.log('transferKey', key);
       return key;
     }
   }]);
@@ -1188,20 +1187,33 @@ function optionsWithBody_(options, body) {
 }(rxcomp.Component);
 AppComponent.meta = {
   selector: '[app-component]'
-};var CustomInterceptor = function () {
-  function CustomInterceptor() {}
+};var CustomRequestInterceptor = function () {
+  function CustomRequestInterceptor() {}
 
-  var _proto = CustomInterceptor.prototype;
+  var _proto = CustomRequestInterceptor.prototype;
 
   _proto.intercept = function intercept(request, next) {
 
-    var clonedRequest = request.clone({
-      url: request.url
-    });
-    return next.handle(clonedRequest);
+    return next.handle(request);
   };
 
-  return CustomInterceptor;
+  return CustomRequestInterceptor;
+}();
+var CustomResponseInterceptor = function () {
+  function CustomResponseInterceptor() {}
+
+  var _proto2 = CustomResponseInterceptor.prototype;
+
+  _proto2.intercept = function intercept(request, next) {
+    return next.handle(request).pipe(operators.tap(function (event) {
+      if (event instanceof HttpResponse) {
+        console.log('CustomResponseInterceptor.status', event.status);
+        console.log('CustomResponseInterceptor.filter', request.params.get('filter'));
+      }
+    }));
+  };
+
+  return CustomResponseInterceptor;
 }();var AppModule = function (_Module) {
   _inheritsLoose(AppModule, _Module);
 
@@ -1212,7 +1224,7 @@ AppComponent.meta = {
   return AppModule;
 }(rxcomp.Module);
 AppModule.meta = {
-  imports: [rxcomp.CoreModule, HttpModule.useInterceptors([CustomInterceptor])],
+  imports: [rxcomp.CoreModule, HttpModule.useInterceptors([CustomRequestInterceptor, CustomResponseInterceptor])],
   declarations: [],
   bootstrap: AppComponent
 };rxcomp.Browser.bootstrap(AppModule);}(rxcomp,rxjs,rxjs.operators));
