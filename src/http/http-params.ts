@@ -1,31 +1,12 @@
+import { HttpUrlEncodingCodec, IHttpParamEncoder, parseRawParams_ } from "./http-params.encoder";
 
-export interface IHttpParamEncoder {
-	encodeKey(key: string): string;
-	encodeValue(value: string): string;
-	decodeKey(key: string): string;
-	decodeValue(value: string): string;
-}
-
-export class HttpUrlEncodingCodec implements IHttpParamEncoder {
-	encodeKey(key: string): string {
-		return encodeParam_(key);
-	}
-	encodeValue(value: string): string {
-		return encodeParam_(value);
-	}
-	decodeKey(key: string): string {
-		return decodeURIComponent(key);
-	}
-	decodeValue(value: string) {
-		return decodeURIComponent(value);
-	}
-}
 
 export class HttpParams {
 	private params_: Map<string, string[]> = new Map<string, string[]>();
 	private encoder: IHttpParamEncoder;
 
 	constructor(options?: HttpParams | { [key: string]: any } | string | undefined, encoder: IHttpParamEncoder = new HttpUrlEncodingCodec()) {
+		console.log('HttpParams', encoder);
 		this.encoder = encoder;
 		const params = this.params_;
 		if (options instanceof HttpParams) {
@@ -87,7 +68,9 @@ export class HttpParams {
 	toString(): string {
 		return this.keys().map((key: string) => {
 			const values = this.params_.get(key);
-			return this.encoder.encodeKey(key) + (values ? '=' + values.map(x => this.encoder.encodeValue(x)).join('&') : '');
+			const keyValue: string = this.encoder.encodeKey(key) + (values ? '=' + values.map(x => this.encoder.encodeValue(x)).join('&') : '');
+			console.log(key, values, keyValue, this.encoder);
+			return keyValue;
 		}).filter(keyValue => keyValue !== '').join('&');
 	}
 
@@ -110,31 +93,4 @@ export class HttpParams {
 		});
 		return clone;
 	}
-}
-
-function parseRawParams_(params: Map<string, string[]>, queryString: string, encoder: IHttpParamEncoder): Map<string, string[]> {
-	if (queryString.length > 0) {
-		const keyValueParams: string[] = queryString.split('&');
-		keyValueParams.forEach((keyValue: string) => {
-			const index = keyValue.indexOf('=');
-			const [key, value]: string[] = index == -1 ? [encoder.decodeKey(keyValue), ''] : [encoder.decodeKey(keyValue.slice(0, index)), encoder.decodeValue(keyValue.slice(index + 1))];
-			const values = params.get(key) || [];
-			values.push(value);
-			params.set(key, values);
-		});
-	}
-	return params;
-}
-
-function encodeParam_(v: string): string {
-	return encodeURIComponent(v)
-		.replace(/%40/gi, '@')
-		.replace(/%3A/gi, ':')
-		.replace(/%24/gi, '$')
-		.replace(/%2C/gi, ',')
-		.replace(/%3B/gi, ';')
-		.replace(/%2B/gi, '+')
-		.replace(/%3D/gi, '=')
-		.replace(/%3F/gi, '?')
-		.replace(/%2F/gi, '/');
 }

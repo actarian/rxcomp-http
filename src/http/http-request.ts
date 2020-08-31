@@ -1,6 +1,7 @@
 import { getLocationComponents, optionsToKey } from 'rxcomp';
 import { HttpHeaders } from './http-headers';
 import { HttpParams } from './http-params';
+import { IHttpParamEncoder } from './http-params.encoder';
 
 export type HttpMethodType = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS' | 'HEAD' | 'JSONP';
 export type HttpMethodBodyType = 'POST' | 'PUT' | 'PATCH';
@@ -13,6 +14,7 @@ export interface IHttpRequestInit<T> {
 	headers?: HttpHeaders | Headers | { [key: string]: string | string[] } | string | undefined;
 	reportProgress?: boolean;
 	params?: HttpParams | { [key: string]: any } | string | undefined;
+	paramsEncoder?: IHttpParamEncoder;
 	responseType?: HttpResponseType;
 	withCredentials?: boolean;
 	hydrate?: boolean;
@@ -70,7 +72,7 @@ export class HttpRequest<T> {
 				this.headers = new HttpHeaders(options.headers);
 			}
 			if (options.params) {
-				this.params = new HttpParams(options.params);
+				this.params = (options.params instanceof HttpParams) ? options.params : new HttpParams(options.params, options.paramsEncoder);
 			}
 		}
 		if (!this.headers) {

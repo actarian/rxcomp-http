@@ -598,12 +598,12 @@ HttpModule.meta = {
     return encodeParam_(key);
   };
 
-  _proto.encodeValue = function encodeValue(value) {
-    return encodeParam_(value);
-  };
-
   _proto.decodeKey = function decodeKey(key) {
     return decodeURIComponent(key);
+  };
+
+  _proto.encodeValue = function encodeValue(value) {
+    return encodeParam_(value);
   };
 
   _proto.decodeValue = function decodeValue(value) {
@@ -612,114 +612,31 @@ HttpModule.meta = {
 
   return HttpUrlEncodingCodec;
 }();
-var HttpParams = function () {
-  function HttpParams(options, encoder) {
-    if (encoder === void 0) {
-      encoder = new HttpUrlEncodingCodec();
-    }
+var HttpSerializerCodec = function () {
+  function HttpSerializerCodec() {}
 
-    this.params_ = new Map();
-    this.encoder = encoder;
-    var params = this.params_;
+  var _proto2 = HttpSerializerCodec.prototype;
 
-    if (options instanceof HttpParams) {
-      options.params_.forEach(function (value, key) {
-        params.set(key, value);
-      });
-    } else if (typeof options === 'object') {
-      Object.keys(options).forEach(function (key) {
-        var value = options[key];
-        params.set(key, Array.isArray(value) ? value : [value]);
-      });
-    } else if (typeof options === 'string') {
-      parseRawParams_(params, options, this.encoder);
-    }
-  }
-
-  var _proto2 = HttpParams.prototype;
-
-  _proto2.keys = function keys() {
-    return Array.from(this.params_.keys());
+  _proto2.encodeKey = function encodeKey(key) {
+    return encodeParam_(key);
   };
 
-  _proto2.has = function has(key) {
-    return this.params_.has(key);
+  _proto2.decodeKey = function decodeKey(key) {
+    return decodeURIComponent(key);
   };
 
-  _proto2.get = function get(key) {
-    var value = this.params_.get(key);
-    return value ? value[0] : null;
+  _proto2.encodeValue = function encodeValue(value) {
+    console.log('encodeValue', value);
+    return rxcomp.Serializer.encode(value, [rxcomp.encodeJson, encodeURIComponent, rxcomp.encodeBase64]) || '';
   };
 
-  _proto2.getAll = function getAll(key) {
-    return this.params_.get(key) || null;
+  _proto2.decodeValue = function decodeValue(value) {
+    console.log('decodeValue', value);
+    return rxcomp.Serializer.decode(value, [rxcomp.decodeBase64, decodeURIComponent, rxcomp.decodeJson]) || '';
   };
 
-  _proto2.set = function set(key, value) {
-    var clone = this.clone_();
-    clone.params_.set(key, [value]);
-    return clone;
-  };
-
-  _proto2.append = function append(key, value) {
-    var clone = this.clone_();
-
-    if (clone.has(key)) {
-      var values = clone.params_.get(key) || [];
-      values.push(value);
-      clone.params_.set(key, values);
-    } else {
-      clone.params_.set(key, [value]);
-    }
-
-    return clone;
-  };
-
-  _proto2.delete = function _delete(key) {
-    var clone = this.clone_();
-    clone.params_.delete(key);
-    return clone;
-  };
-
-  _proto2.toString = function toString() {
-    var _this = this;
-
-    return this.keys().map(function (key) {
-      var values = _this.params_.get(key);
-
-      return _this.encoder.encodeKey(key) + (values ? '=' + values.map(function (x) {
-        return _this.encoder.encodeValue(x);
-      }).join('&') : '');
-    }).filter(function (keyValue) {
-      return keyValue !== '';
-    }).join('&');
-  };
-
-  _proto2.toObject = function toObject() {
-    var _this2 = this;
-
-    var params = {};
-    this.keys().map(function (key) {
-      var values = _this2.params_.get(key);
-
-      if (values) {
-        params[key] = values;
-      }
-    });
-    return params;
-  };
-
-  _proto2.clone_ = function clone_() {
-    var clone = new HttpParams(undefined, this.encoder);
-    this.params_.forEach(function (value, key) {
-      clone.params_.set(key, value);
-    });
-    return clone;
-  };
-
-  return HttpParams;
+  return HttpSerializerCodec;
 }();
-
 function parseRawParams_(params, queryString, encoder) {
   if (queryString.length > 0) {
     var keyValueParams = queryString.split('&');
@@ -739,9 +656,118 @@ function parseRawParams_(params, queryString, encoder) {
   return params;
 }
 
-function encodeParam_(v) {
-  return encodeURIComponent(v).replace(/%40/gi, '@').replace(/%3A/gi, ':').replace(/%24/gi, '$').replace(/%2C/gi, ',').replace(/%3B/gi, ';').replace(/%2B/gi, '+').replace(/%3D/gi, '=').replace(/%3F/gi, '?').replace(/%2F/gi, '/');
-}var HttpRequest = function () {
+function encodeParam_(value) {
+  return encodeURIComponent(value).replace(/%40/gi, '@').replace(/%3A/gi, ':').replace(/%24/gi, '$').replace(/%2C/gi, ',').replace(/%3B/gi, ';').replace(/%2B/gi, '+').replace(/%3D/gi, '=').replace(/%3F/gi, '?').replace(/%2F/gi, '/');
+}var HttpParams = function () {
+  function HttpParams(options, encoder) {
+    if (encoder === void 0) {
+      encoder = new HttpUrlEncodingCodec();
+    }
+
+    this.params_ = new Map();
+    console.log('HttpParams', encoder);
+    this.encoder = encoder;
+    var params = this.params_;
+
+    if (options instanceof HttpParams) {
+      options.params_.forEach(function (value, key) {
+        params.set(key, value);
+      });
+    } else if (typeof options === 'object') {
+      Object.keys(options).forEach(function (key) {
+        var value = options[key];
+        params.set(key, Array.isArray(value) ? value : [value]);
+      });
+    } else if (typeof options === 'string') {
+      parseRawParams_(params, options, this.encoder);
+    }
+  }
+
+  var _proto = HttpParams.prototype;
+
+  _proto.keys = function keys() {
+    return Array.from(this.params_.keys());
+  };
+
+  _proto.has = function has(key) {
+    return this.params_.has(key);
+  };
+
+  _proto.get = function get(key) {
+    var value = this.params_.get(key);
+    return value ? value[0] : null;
+  };
+
+  _proto.getAll = function getAll(key) {
+    return this.params_.get(key) || null;
+  };
+
+  _proto.set = function set(key, value) {
+    var clone = this.clone_();
+    clone.params_.set(key, [value]);
+    return clone;
+  };
+
+  _proto.append = function append(key, value) {
+    var clone = this.clone_();
+
+    if (clone.has(key)) {
+      var values = clone.params_.get(key) || [];
+      values.push(value);
+      clone.params_.set(key, values);
+    } else {
+      clone.params_.set(key, [value]);
+    }
+
+    return clone;
+  };
+
+  _proto.delete = function _delete(key) {
+    var clone = this.clone_();
+    clone.params_.delete(key);
+    return clone;
+  };
+
+  _proto.toString = function toString() {
+    var _this = this;
+
+    return this.keys().map(function (key) {
+      var values = _this.params_.get(key);
+
+      var keyValue = _this.encoder.encodeKey(key) + (values ? '=' + values.map(function (x) {
+        return _this.encoder.encodeValue(x);
+      }).join('&') : '');
+      console.log(key, values, keyValue, _this.encoder);
+      return keyValue;
+    }).filter(function (keyValue) {
+      return keyValue !== '';
+    }).join('&');
+  };
+
+  _proto.toObject = function toObject() {
+    var _this2 = this;
+
+    var params = {};
+    this.keys().map(function (key) {
+      var values = _this2.params_.get(key);
+
+      if (values) {
+        params[key] = values;
+      }
+    });
+    return params;
+  };
+
+  _proto.clone_ = function clone_() {
+    var clone = new HttpParams(undefined, this.encoder);
+    this.params_.forEach(function (value, key) {
+      clone.params_.set(key, value);
+    });
+    return clone;
+  };
+
+  return HttpParams;
+}();var HttpRequest = function () {
   function HttpRequest(method, url, third, fourth) {
     this.url = url;
     this.reportProgress = false;
@@ -774,7 +800,7 @@ function encodeParam_(v) {
       }
 
       if (options.params) {
-        this.params = new HttpParams(options.params);
+        this.params = options.params instanceof HttpParams ? options.params : new HttpParams(options.params, options.paramsEncoder);
       }
     }
 
@@ -967,7 +993,7 @@ function isFormData_(value) {
       var params = undefined;
 
       if (options.params) {
-        params = new HttpParams(options.params);
+        params = new HttpParams(options.params, options.paramsEncoder);
       }
 
       request = new HttpRequest(first, url, options.body !== undefined ? options.body : null, {
@@ -1163,8 +1189,16 @@ function optionsWithBody_(options, body) {
         node = _getContext.node;
 
     node.classList.add('init');
-    var methodUrl = "/rxcomp-http/data/get-todos.json";
-    HttpService.get$(methodUrl).pipe(operators.first()).subscribe(function (response) {
+    HttpService.get$("/rxcomp-http/data/get-todos.json", {
+      params: {
+        q: {
+          a: 1,
+          b: 2,
+          c: [1, 2, 3, 4]
+        }
+      },
+      paramsEncoder: new HttpSerializerCodec()
+    }).pipe(operators.first()).subscribe(function (response) {
       _this2.items = response.data.getTodos;
 
       _this2.pushChanges();

@@ -10,11 +10,9 @@ import { HttpEvent, HttpResponse } from './http-response';
 export default class HttpService {
 
 	static pendingRequests$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
-
 	static incrementPendingRequest() {
 		HttpService.pendingRequests$.next(HttpService.pendingRequests$.getValue() + 1);
 	}
-
 	static decrementPendingRequest() {
 		HttpService.pendingRequests$.next(HttpService.pendingRequests$.getValue() - 1);
 	}
@@ -35,7 +33,7 @@ export default class HttpService {
 			}
 			let params: HttpParams | undefined = undefined;
 			if (options.params) {
-				params = new HttpParams(options.params);
+				params = new HttpParams(options.params, options.paramsEncoder);
 			}
 			request = new HttpRequest(first, url!, (options.body !== undefined ? options.body : null), {
 				headers,

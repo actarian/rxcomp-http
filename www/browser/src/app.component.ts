@@ -1,6 +1,6 @@
 import { Component, errors$, getContext, IFactoryMeta } from 'rxcomp';
 import { first, takeUntil } from 'rxjs/operators';
-import { HttpService } from '../../../src/rxcomp-http';
+import { HttpSerializerCodec, HttpService } from '../../../src/rxcomp-http';
 import { IResponseData, ITodoItem } from './todo/todo';
 
 export default class AppComponent extends Component {
@@ -52,8 +52,10 @@ export default class AppComponent extends Component {
 			this.pushChanges();
 		});
 		*/
-		const methodUrl: string = `/rxcomp-http/data/get-todos.json`;
-		HttpService.get$<IResponseData>(methodUrl).pipe(
+		HttpService.get$<IResponseData>(`/rxcomp-http/data/get-todos.json`, {
+			params: { q: { a: 1, b: 2, c: [1, 2, 3, 4] } },
+			paramsEncoder: new HttpSerializerCodec()
+		}).pipe(
 			first(),
 		).subscribe((response: IResponseData) => {
 			this.items = response.data.getTodos;
