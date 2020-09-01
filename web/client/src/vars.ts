@@ -1,6 +1,4 @@
-import { IServerVars } from "../../../src/rxcomp-http";
-
-export const Vars: IServerVars = {
+export const Vars = {
 	name: 'rxcomp-http',
 	host: '',
 	resource: '/',
