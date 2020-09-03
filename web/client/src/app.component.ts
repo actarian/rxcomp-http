@@ -6,7 +6,6 @@ import { IResponseData, ITodoItem } from './todo/todo';
 export default class AppComponent extends Component {
 	items: ITodoItem[] = [];
 	error: any = null;
-
 	onInit() {
 		// console.log('AppComponent.onInit', this);
 		const { node } = getContext(this);
@@ -70,14 +69,11 @@ export default class AppComponent extends Component {
 			this.pushChanges();
 		});
 	}
-
 	onClick(item: { title: string, completed: boolean }) {
 		item.completed = !item.completed;
 		this.pushChanges();
 	}
-
 	static meta: IFactoryMeta = {
 		selector: '[app-component]',
 	};
-
 }

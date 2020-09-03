@@ -7,9 +7,7 @@ import { HttpRequest } from './http-request';
 import { HttpEvent, HttpResponse, IHttpResponse } from './http-response';
 
 export class HttpFetchHandler implements HttpHandler {
-
 	private response_: HttpResponse<any> | null = null;
-
 	handle<T>(request: HttpRequest<any>): Observable<HttpEvent<T>> {
 		if (!request.method) {
 			throw new Error(`missing method`);
@@ -17,7 +15,9 @@ export class HttpFetchHandler implements HttpHandler {
 		const requestInfo: RequestInfo = request.urlWithParams;
 		const requestInit: RequestInit = request.toInitRequest();
 		// console.log('fetchRequest', fetchRequest);
-		// fetchRequest.headers.forEach((value, key) => console.log('HttpFetchHandler.handle', key, value));
+		// fetchRequest.headers.forEach((value, key) => {
+		// console.log('HttpFetchHandler.handle', key, value);
+		// });
 		// request = request.clone({ headers: fetchRequest.headers });
 		// console.log('HttpFetchHandler.handle', 'requestInfo', requestInfo, 'requestInit', requestInit);
 		// hydrate
@@ -71,7 +71,6 @@ export class HttpFetchHandler implements HttpHandler {
 			);
 		}
 	}
-
 	getProgress<T>(response: Response, request: HttpRequest<any>): Promise<Response | HttpResponse<T>> {
 		// console.log('HttpFetchHandler.setProgress', request.reportProgress, response.body);
 		const clonedBody = response.clone().body;
@@ -88,7 +87,7 @@ export class HttpFetchHandler implements HttpHandler {
 							if (value) {
 								chunks.push(value);
 								receivedLength += value.length || 0;
-								console.log(`HttpFetchHandler.setProgress ${(receivedLength / contentLength * 100).toFixed(2)}% ${receivedLength} of ${contentLength}`);
+								// console.log(`HttpFetchHandler.setProgress ${(receivedLength / contentLength * 100).toFixed(2)}% ${receivedLength} of ${contentLength}`);
 							}
 							getChunk();
 						} else {
@@ -106,7 +105,7 @@ export class HttpFetchHandler implements HttpHandler {
 								const result = new TextDecoder("utf-8").decode(chunksAll);
 								// We're done!
 								const data = JSON.parse(result);
-								console.log('HttpFetchHandler.setProgress data', data);
+								// console.log('HttpFetchHandler.setProgress data', data);
 								resolve(response);
 							}
 						}
@@ -162,7 +161,6 @@ export class HttpFetchHandler implements HttpHandler {
 			return Promise.resolve(response);
 		}
 	}
-
 	getResponse<T>(response: Response | HttpResponse<T>, request: HttpRequest<any>): Promise<HttpResponse<T>> {
 		this.response_ = new HttpResponse<T>(response as IHttpResponse<T>);
 		if (isPlatformBrowser && request.reportProgress && response.body) {
@@ -171,7 +169,6 @@ export class HttpFetchHandler implements HttpHandler {
 			return this.getResponseType(response as Response, request);
 		}
 	}
-
 	getResponseType<T>(response: Response, request: HttpRequest<any>): Promise<HttpResponse<T>> {
 		return new Promise((resolve, reject) => {
 			this.response_ = new HttpResponse<T>(response as unknown as IHttpResponse<T>);
@@ -189,7 +186,6 @@ export class HttpFetchHandler implements HttpHandler {
 			}
 		});
 	}
-
 	getReadableStream<T>(response: Response, request: HttpRequest<any>): ReadableStream {
 		const reader = response.body!.getReader();
 		const readableStream = new ReadableStream({
@@ -219,58 +215,55 @@ export class HttpFetchHandler implements HttpHandler {
 					controller.close();
 				}
 				controller.enqueue(request.bodyUsed);
-				console.log("pull, request.bodyUsed:", request.bodyUsed);
+				// console.log("pull, request.bodyUsed:", request.bodyUsed);
 			},
 			cancel(reason) {
-				console.log(reason);
+				// console.log(reason);
 			}
 			*/
 		});
 		return readableStream;
 	}
-
-	/*
+}
+/*
 	onProgress(value: Uint8Array, done: boolean, request, reader, progress) {
-		console.log("value:", value);
+		// console.log("value:", value);
 		if (value || done) {
-			console.log("upload complete, request.bodyUsed:", request.bodyUsed);
+			// console.log("upload complete, request.bodyUsed:", request.bodyUsed);
 			progress.value = progress.max;
 			return reader.closed.then(() => fileUpload);
 		};
-		console.log("upload progress:", value);
+		// console.log("upload progress:", value);
 		if (progress.value < file.size) {
 			progress.value += 1;
 		}
 		return reader.read().then(({ value, done }) => this.onProgress(value, done, request, reader, progress));
 	}
 	*/
-
-	/*
-	getProgress_(request) {
-		const uploadProgress = new ReadableStream({
-			start(controller) {
-				console.log("starting upload, request.bodyUsed:", request.bodyUsed);
-				controller.enqueue(request.bodyUsed);
-			},
-			pull(controller) {
-				if (request.bodyUsed) {
-					controller.close();
-				}
-				controller.enqueue(request.bodyUsed);
-				console.log("pull, request.bodyUsed:", request.bodyUsed);
-			},
-			cancel(reason) {
-				console.log(reason);
+/*
+getProgress_(request) {
+	const uploadProgress = new ReadableStream({
+		start(controller) {
+			// console.log("starting upload, request.bodyUsed:", request.bodyUsed);
+			controller.enqueue(request.bodyUsed);
+		},
+		pull(controller) {
+			if (request.bodyUsed) {
+				controller.close();
 			}
-		});
-		const [fileUpload, reader] = [
-			upload(request).catch(e => {
-				reader.cancel();
-				console.log(e);
-				throw e
-			}), uploadProgress.getReader()
-		];
-	}
-	*/
-
+			controller.enqueue(request.bodyUsed);
+			// console.log("pull, request.bodyUsed:", request.bodyUsed);
+		},
+		cancel(reason) {
+			// console.log(reason);
+		}
+	});
+	const [fileUpload, reader] = [
+		upload(request).catch(e => {
+			reader.cancel();
+			// console.log(e);
+			throw e
+		}), uploadProgress.getReader()
+	];
 }
+*/

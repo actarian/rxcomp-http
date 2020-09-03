@@ -6,7 +6,6 @@ export interface IHttpParamEncoder {
 	encodeValue(value: string): string;
 	decodeValue(value: string): string;
 }
-
 export class HttpUrlEncodingCodec implements IHttpParamEncoder {
 	encodeKey(key: string): string {
 		return encodeParam_(key);
@@ -21,7 +20,6 @@ export class HttpUrlEncodingCodec implements IHttpParamEncoder {
 		return decodeURIComponent(value);
 	}
 }
-
 export class HttpSerializerCodec implements IHttpParamEncoder {
 	encodeKey(key: string): string {
 		return encodeParam_(key);
@@ -30,16 +28,14 @@ export class HttpSerializerCodec implements IHttpParamEncoder {
 		return decodeURIComponent(key);
 	}
 	encodeValue(value: any): string {
-		console.log('encodeValue', value);
+		// console.log('encodeValue', value);
 		return Serializer.encode(value, [encodeJson, encodeURIComponent, encodeBase64]) || '';
 	}
 	decodeValue(value: string): any {
-		console.log('decodeValue', value);
+		// console.log('decodeValue', value);
 		return Serializer.decode(value, [decodeBase64, decodeURIComponent, decodeJson]) || '';
 	}
-
 }
-
 export function parseRawParams_(params: Map<string, string[]>, queryString: string, encoder: IHttpParamEncoder): Map<string, string[]> {
 	if (queryString.length > 0) {
 		const keyValueParams: string[] = queryString.split('&');
@@ -53,7 +49,6 @@ export function parseRawParams_(params: Map<string, string[]>, queryString: stri
 	}
 	return params;
 }
-
 function encodeParam_(value: string): string {
 	return encodeURIComponent(value)
 		.replace(/%40/gi, '@')

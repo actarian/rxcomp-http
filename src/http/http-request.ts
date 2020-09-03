@@ -9,7 +9,6 @@ export type HttpMethodNoBodyType = 'GET' | 'DELETE' | 'OPTIONS' | 'HEAD' | 'JSON
 export type HttpResponseType = 'arraybuffer' | 'blob' | 'json' | 'text';
 export type HttpBodyType<T> = T | string | Blob | ArrayBufferView | ArrayBuffer | FormData | URLSearchParams | ReadableStream<Uint8Array> | null | undefined;
 export type HttpObserveType = 'body' | 'events' | 'response';
-
 export interface IHttpRequestInit<T> {
 	headers?: HttpHeaders | Headers | { [key: string]: string | string[] } | string | undefined;
 	reportProgress?: boolean;
@@ -21,12 +20,10 @@ export interface IHttpRequestInit<T> {
 	observe?: HttpObserveType;
 	body?: HttpBodyType<T>;
 }
-
 export interface IHttpRequest<T> extends IHttpRequestInit<T> {
 	method?: HttpMethodType,
 	url?: string,
 }
-
 export class HttpRequest<T> {
 	readonly body: HttpBodyType<T>;
 	readonly headers!: HttpHeaders;
@@ -216,7 +213,6 @@ export class HttpRequest<T> {
 		return request;
 	}
 }
-
 function methodHasBody_(method: string): boolean {
 	switch (method) {
 		case 'DELETE':
@@ -229,15 +225,12 @@ function methodHasBody_(method: string): boolean {
 			return true;
 	}
 }
-
 function isArrayBuffer_(value: any): value is ArrayBuffer {
 	return typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer;
 }
-
 function isBlob_(value: any): value is Blob {
 	return typeof Blob !== 'undefined' && value instanceof Blob;
 }
-
 function isFormData_(value: any): value is FormData {
 	return typeof FormData !== 'undefined' && value instanceof FormData;
 }

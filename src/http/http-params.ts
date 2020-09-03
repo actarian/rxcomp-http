@@ -1,12 +1,10 @@
 import { HttpUrlEncodingCodec, IHttpParamEncoder, parseRawParams_ } from "./http-params.encoder";
 
-
 export class HttpParams {
 	private params_: Map<string, string[]> = new Map<string, string[]>();
 	private encoder: IHttpParamEncoder;
-
 	constructor(options?: HttpParams | { [key: string]: any } | string | undefined, encoder: IHttpParamEncoder = new HttpUrlEncodingCodec()) {
-		console.log('HttpParams', encoder);
+		// console.log('HttpParams', encoder);
 		this.encoder = encoder;
 		const params = this.params_;
 		if (options instanceof HttpParams) {
@@ -23,30 +21,24 @@ export class HttpParams {
 		}
 		// ?updates=null&cloneFrom=null&encoder=%5Bobject%20Object%5D&params_=%5Bobject%20Map%5D
 	}
-
 	keys(): string[] {
 		return Array.from(this.params_.keys());
 	}
-
 	has(key: string): boolean {
 		return this.params_.has(key);
 	}
-
 	get(key: string): string | null {
 		const value = this.params_.get(key);
 		return value ? value[0] : null;
 	}
-
 	getAll(key: string): string[] | null {
 		return this.params_.get(key) || null;
 	}
-
 	set(key: string, value: string): HttpParams {
 		const clone = this.clone_();
 		clone.params_.set(key, [value]);
 		return clone;
 	}
-
 	append(key: string, value: string): HttpParams {
 		const clone = this.clone_();
 		if (clone.has(key)) {
@@ -58,22 +50,19 @@ export class HttpParams {
 		}
 		return clone;
 	}
-
 	delete(key: string): HttpParams {
 		const clone = this.clone_();
 		clone.params_.delete(key);
 		return clone;
 	}
-
 	toString(): string {
 		return this.keys().map((key: string) => {
 			const values = this.params_.get(key);
 			const keyValue: string = this.encoder.encodeKey(key) + (values ? '=' + values.map(x => this.encoder.encodeValue(x)).join('&') : '');
-			console.log(key, values, keyValue, this.encoder);
+			// console.log(key, values, keyValue, this.encoder);
 			return keyValue;
 		}).filter(keyValue => keyValue !== '').join('&');
 	}
-
 	toObject(): { [keys: string]: any } {
 		let params: { [keys: string]: any } = {};
 		this.keys().map((key: string) => {
@@ -85,7 +74,6 @@ export class HttpParams {
 		});
 		return params;
 	}
-
 	private clone_(): HttpParams {
 		const clone = new HttpParams(undefined, this.encoder);
 		this.params_.forEach((value, key) => {

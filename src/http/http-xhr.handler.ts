@@ -8,14 +8,12 @@ import { HttpRequest } from './http-request';
 import { HttpEvent, HttpHeaderResponse, HttpResponse } from './http-response';
 
 const XSSI_PREFIX = /^\)\]\}',?\n/;
-
 export interface IPartialResponse {
 	headers: HttpHeaders;
 	status: number;
 	statusText: string;
 	url: string;
 }
-
 export class HttpXhrHandler implements HttpHandler {
 	handle<T>(request: HttpRequest<any>): Observable<HttpEvent<T>> {
 		if (!request.method) {
@@ -24,7 +22,7 @@ export class HttpXhrHandler implements HttpHandler {
 		if (request.method === 'JSONP') {
 			throw new Error(`Attempted to construct Jsonp request without JsonpClientModule installed.`);
 		}
-		console.log('HttpXhrHandler.request', request);
+		// console.log('HttpXhrHandler.request', request);
 		return new Observable((observer: Observer<HttpEvent<any>>) => {
 			const xhr = new XMLHttpRequest();
 			const requestInfo: RequestInfo = request.urlWithParams;
@@ -56,7 +54,7 @@ export class HttpXhrHandler implements HttpHandler {
 						headers.set('Content-Type', detectedType);
 					}
 				}
-				console.log('HttpXhrHandler.contentType', headers.get('Content-Type'));
+				// console.log('HttpXhrHandler.contentType', headers.get('Content-Type'));
 				headers.forEach((value, name) => xhr.setRequestHeader(name, value));
 				if (request.responseType) {
 					xhr.responseType = (request.responseType !== 'json' ? request.responseType : 'text') as any;
@@ -141,7 +139,7 @@ export class HttpXhrHandler implements HttpHandler {
 					observer.error(httpErrorResponse);
 				};
 				let sentHeaders = false;
-				const onDownProgress = (event: ProgressEvent) => {
+				const onDownloadProgress = (event: ProgressEvent) => {
 					if (!sentHeaders) {
 						observer.next(partialFromXhr_());
 						sentHeaders = true;
@@ -156,7 +154,7 @@ export class HttpXhrHandler implements HttpHandler {
 					if (request.responseType === 'text' && !!xhr.responseText) {
 						progressEvent.partialText = xhr.responseText;
 					}
-					console.log(progressEvent);
+					// console.log('HttpXhrHandler.onDownloadProgress', progressEvent);
 					observer.next(progressEvent);
 				};
 				const onUpProgress = (event: ProgressEvent) => {
@@ -172,7 +170,7 @@ export class HttpXhrHandler implements HttpHandler {
 				xhr.addEventListener('load', onLoad);
 				xhr.addEventListener('error', onError);
 				if (request.reportProgress) {
-					xhr.addEventListener('progress', onDownProgress);
+					xhr.addEventListener('progress', onDownloadProgress);
 					if (body !== null && xhr.upload) {
 						xhr.upload.addEventListener('progress', onUpProgress);
 					}
@@ -183,7 +181,7 @@ export class HttpXhrHandler implements HttpHandler {
 					xhr.removeEventListener('error', onError);
 					xhr.removeEventListener('load', onLoad);
 					if (request.reportProgress) {
-						xhr.removeEventListener('progress', onDownProgress);
+						xhr.removeEventListener('progress', onDownloadProgress);
 						if (body !== null && xhr.upload) {
 							xhr.upload.removeEventListener('progress', onUpProgress);
 						}
@@ -196,7 +194,6 @@ export class HttpXhrHandler implements HttpHandler {
 		});
 	}
 }
-
 function getResponseUrl_(xhr: any): string | null {
 	if ('responseURL' in xhr && xhr.responseURL) {
 		return xhr.responseURL;
