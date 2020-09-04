@@ -1,7 +1,6 @@
 export default class HttpState {
 	private static store_: { [k: string]: {} | undefined } = {};
 	private static callbacks_: { [k: string]: () => {} | undefined } = {};
-
 	static get<T>(key: string, defaultValue: T): T {
 		return this.store_[key] !== undefined ? this.store_[key] as T : defaultValue;
 	}
@@ -32,7 +31,6 @@ export default class HttpState {
 		return JSON.stringify(this.store_);
 	}
 }
-
 export function makeStateKey<T = void>(key: string): string {
 	return key as string;
 }

@@ -7,14 +7,12 @@ export interface IHttpJsonParseError {
 	error: Error;
 	text: string;
 }
-
 export interface IHttpErrorResponse<T> extends IHttpHeaderResponse<T> {
 	error?: any | undefined;
 	message?: string;
 	name?: string;
 	request?: HttpRequest<T> | null;
 }
-
 export class HttpErrorResponse<T> extends Error implements IHttpErrorResponse<T> {
 	readonly headers!: HttpHeaders;
 	readonly status: number = 0;

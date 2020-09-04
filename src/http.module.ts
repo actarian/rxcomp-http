@@ -3,10 +3,8 @@ import { HttpInterceptors, IHttpInterceptor, IHttpInterceptorConstructor } from 
 
 const factories: typeof Factory[] = [
 ];
-
 const pipes: typeof Pipe[] = [
 ];
-
 /**
  *  HttpModule Class.
  * @example

@@ -12,11 +12,9 @@ export interface IHttpHeaderResponse<T> {
 	ok?: boolean;
 	type?: HttpEventType;
 }
-
 export interface IHttpResponse<T> extends IHttpHeaderResponse<T> {
 	body?: HttpBodyType<T>;
 }
-
 export class HttpHeaderResponse<T> implements IHttpHeaderResponse<T> {
 	readonly headers!: HttpHeaders;
 	readonly status: number = 200;
@@ -46,7 +44,6 @@ export class HttpHeaderResponse<T> implements IHttpHeaderResponse<T> {
 		return clone;
 	}
 }
-
 export class HttpResponse<T> implements IHttpResponse<T> {
 	readonly headers!: HttpHeaders;
 	readonly status: number = 200;
@@ -90,7 +87,6 @@ export class HttpResponse<T> implements IHttpResponse<T> {
 		return response;
 	}
 }
-
 export abstract class HttpResponseBase<T> {
 	readonly headers: HttpHeaders;
 	readonly status: number = 200;

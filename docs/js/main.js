@@ -1,5 +1,5 @@
 /**
- * @license rxcomp-http v1.0.0-beta.14
+ * @license rxcomp-http v1.0.0-beta.15
  * (c) 2020 Luca Zampetti <lzampetti@gmail.com>
  * License: MIT
  */
@@ -626,12 +626,10 @@ var HttpSerializerCodec = function () {
   };
 
   _proto2.encodeValue = function encodeValue(value) {
-    console.log('encodeValue', value);
     return rxcomp.Serializer.encode(value, [rxcomp.encodeJson, encodeURIComponent, rxcomp.encodeBase64]) || '';
   };
 
   _proto2.decodeValue = function decodeValue(value) {
-    console.log('decodeValue', value);
     return rxcomp.Serializer.decode(value, [rxcomp.decodeBase64, decodeURIComponent, rxcomp.decodeJson]) || '';
   };
 
@@ -665,7 +663,6 @@ function encodeParam_(value) {
     }
 
     this.params_ = new Map();
-    console.log('HttpParams', encoder);
     this.encoder = encoder;
     var params = this.params_;
 
@@ -737,7 +734,6 @@ function encodeParam_(value) {
       var keyValue = _this.encoder.encodeKey(key) + (values ? '=' + values.map(function (x) {
         return _this.encoder.encodeValue(x);
       }).join('&') : '');
-      console.log(key, values, keyValue, _this.encoder);
       return keyValue;
     }).filter(function (keyValue) {
       return keyValue !== '';

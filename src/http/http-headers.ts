@@ -3,7 +3,6 @@ export type IHttpHeaders = string | { [name: string]: string | string[] };
 
 export class HttpHeaders implements Headers {
 	private headers_: Map<string, string[]> = new Map<string, string[]>();
-
 	constructor(options?: HttpHeaders | Headers | { [key: string]: string | string[] } | string | undefined) {
 		const headers = this.headers_;
 		if (options instanceof HttpHeaders) {
@@ -47,22 +46,18 @@ export class HttpHeaders implements Headers {
 			headers.set('Content-Type', ['application/json']);
 		}
 	}
-
 	has(key: string): boolean {
 		return this.headers_.has(key);
 	}
-
 	get(key: string): string | null {
 		const values = this.headers_.get(key);
 		return values ? values.join(', ') : null;
 	}
-
 	set(key: string, value: string): HttpHeaders {
 		const clone = this.clone_();
 		clone.headers_.set(key, value.split(', '));
 		return clone;
 	}
-
 	append(key: string, value: string): HttpHeaders {
 		const clone = this.clone_();
 		const values: string[] = clone.headers_.has(key) ? clone.headers_.get(key) || [] : [];
@@ -70,19 +65,16 @@ export class HttpHeaders implements Headers {
 		clone.headers_.set(key, values);
 		return clone;
 	}
-
 	delete(key: string): HttpHeaders {
 		const clone = this.clone_();
 		clone.headers_.delete(key);
 		return clone;
 	}
-
 	forEach(callback: (value: string, key: string, parent: Headers) => void, thisArg?: any): void {
 		this.headers_.forEach((v, k) => {
 			callback(v.join(', '), k, this);
 		});
 	}
-
 	serialize(): Headers | string[][] | Record<string, string> | undefined {
 		const headers: string[][] = [];
 		this.forEach((value, key) => {
@@ -90,7 +82,6 @@ export class HttpHeaders implements Headers {
 		});
 		return headers;
 	}
-
 	toObject(): { [key: string]: string } {
 		const headers: { [key: string]: string } = {};
 		this.forEach((value, key) => {
@@ -98,7 +89,6 @@ export class HttpHeaders implements Headers {
 		});
 		return headers;
 	}
-
 	private clone_(): HttpHeaders {
 		const clone = new HttpHeaders();
 		this.headers_.forEach((value, key) => {
@@ -106,5 +96,4 @@ export class HttpHeaders implements Headers {
 		});
 		return clone;
 	}
-
 }
