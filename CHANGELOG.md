@@ -3,7 +3,7 @@ All notable changes to the "rxcomp-http" library will be documented in this file
 
 ---
 
-## [1.0.0-beta.15] - 2020-09-04
+## [1.0.0-beta.16] - 2020-09-04
 ### Updating
 - Dependancies
 
