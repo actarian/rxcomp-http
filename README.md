@@ -6,15 +6,15 @@
 
  lib & dependancy    | size
 :--------------------|:----------------------------------------------------------------------------------------------|
-rxcomp-http.min.js   | ![](https://img.badgesize.io/https://unpkg.com/rxcomp-http@1.0.0-beta.18/dist/umd/rxcomp-http.min.js.svg?compression=gzip)
-rxcomp-http.min.js   | ![](https://img.badgesize.io/https://unpkg.com/rxcomp-http@1.0.0-beta.18/dist/umd/rxcomp-http.min.js.svg)
-rxcomp.min.js        | ![](https://img.badgesize.io/https://unpkg.com/rxcomp@1.0.0-beta.18/dist/umd/rxcomp.min.js.svg?compression=gzip)
-rxcomp.min.js        | ![](https://img.badgesize.io/https://unpkg.com/rxcomp@1.0.0-beta.18/dist/umd/rxcomp.min.js.svg)
+rxcomp-http.min.js   | ![](https://img.badgesize.io/https://unpkg.com/rxcomp-http@1.0.0-beta.19/dist/umd/rxcomp-http.min.js.svg?compression=gzip)
+rxcomp-http.min.js   | ![](https://img.badgesize.io/https://unpkg.com/rxcomp-http@1.0.0-beta.19/dist/umd/rxcomp-http.min.js.svg)
+rxcomp.min.js        | ![](https://img.badgesize.io/https://unpkg.com/rxcomp@1.0.0-beta.19/dist/umd/rxcomp.min.js.svg?compression=gzip)
+rxcomp.min.js        | ![](https://img.badgesize.io/https://unpkg.com/rxcomp@1.0.0-beta.19/dist/umd/rxcomp.min.js.svg)
 rxjs.min.js          | ![](https://img.badgesize.io/https://unpkg.com/rxjs@6.6.2/bundles/rxjs.umd.min.js.svg?compression=gzip)
 rxjs.min.js          | ![](https://img.badgesize.io/https://unpkg.com/rxjs@6.6.2/bundles/rxjs.umd.min.js.svg)
  
 > [RxComp Http Demo](https://actarian.github.io/rxcomp-http/)  
-> [RxComp Http Api](https://actarian.github.io/rxcomp-http/api/)  
+> [RxComp Http Api](https://actarian.github.io/rxcomp-http/typedoc/)  
 
 ![](https://rawcdn.githack.com/actarian/rxcomp-http/master/docs/img/rxcomp-http-demo.jpg?token=AAOBSISYZJXZNFFWAPGOLYC7DQKIO)  
 
@@ -35,8 +35,8 @@ For CDN, you can use unpkg
 
 ```html
 <script src="https://unpkg.com/rxjs@6.6.2/bundles/rxjs.umd.min.js" crossorigin="anonymous" SameSite="none Secure"></script>
-<script src="https://unpkg.com/rxcomp@1.0.0-beta.18/dist/umd/rxcomp.min.js" crossorigin="anonymous" SameSite="none Secure"></script>  
-<script src="https://unpkg.com/rxcomp-http@1.0.0-beta.18/dist/umd/rxcomp-http.min.js" crossorigin="anonymous" SameSite="none Secure"></script>  
+<script src="https://unpkg.com/rxcomp@1.0.0-beta.19/dist/umd/rxcomp.min.js" crossorigin="anonymous" SameSite="none Secure"></script>  
+<script src="https://unpkg.com/rxcomp-http@1.0.0-beta.19/dist/umd/rxcomp-http.min.js" crossorigin="anonymous" SameSite="none Secure"></script>  
 ```
 
 The global namespace for RxComp is `rxcomp`

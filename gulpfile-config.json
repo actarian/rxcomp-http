@@ -99,7 +99,6 @@
             }
           ],
           "globals": {
-            "htmlparser2": "htmlparser2",
             "rxjs": "rxjs",
             "rxjs/operators": "rxjs.operators",
             "rxcomp": "rxcomp"

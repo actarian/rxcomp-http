@@ -2,7 +2,7 @@
   "author": "Luca Zampetti <lzampetti@gmail.com>",
   "name": "rxcomp-http",
   "description": "Reactive HttpModule for RxComp component library",
-  "version": "1.0.0-beta.18",
+  "version": "1.0.0-beta.19",
   "browser": "dist/umd/rxcomp-http.js",
   "main": "dist/cjs/rxcomp-http.js",
   "types": "dist/cjs/rxcomp-http.d.ts",
@@ -36,9 +36,8 @@
     "serve": "node web/server/index.js"
   },
   "dependencies": {
-    "htmlparser2": "4.1.0",
     "rxjs": "6.6.2",
-    "rxcomp": "1.0.0-beta.18",
+    "rxcomp": "1.0.0-beta.19",
     "tslib": "2.0.1"
   },
   "devDependencies": {
